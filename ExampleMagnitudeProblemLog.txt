@@ -3,7 +3,7 @@ down to 76% of the expected local field strength; this magnitude
 should be constant.
 
 Readings were performed to find minimum and maximum turning the
-MMC5983MA in 3D while keeping it at the same positin in space.
+MMC5983MA in 3D while keeping it at the same position in space.
 
 
 13:37:39: 1 MCP2221s found connected to this PC; first one opened OK.
@@ -15,7 +15,7 @@ MMC5983MA in 3D while keeping it at the same positin in space.
 13:37:39: =======================================
 
 
-Each reading sequence looks like ththe following.
+Each reading sequence looks like the following.
 It's got two read operations: first after SET, second after RESET.
 I've removed the detailed register IO trace in subsequent readings.
 
