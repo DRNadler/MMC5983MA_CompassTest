@@ -159,7 +159,7 @@
                             <property name="border">5</property>
                             <property name="flag">wxALL|wxEXPAND</property>
                             <property name="proportion">1</property>
-                            <object class="wxBoxSizer" expanded="0">
+                            <object class="wxBoxSizer" expanded="1">
                                 <property name="minimum_size">700,-1</property>
                                 <property name="name">ResultSummary_bSizer</property>
                                 <property name="orient">wxVERTICAL</property>

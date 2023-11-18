@@ -201,7 +201,7 @@ void MyFrame::Make_A_Measurement() {
         if (sensors_mG[i] > maxReadings_mG[i]) maxReadings_mG[i] = sensors_mG[i];
     };
     wxString report_MinMax;
-    report_MinMax.Printf("Min/Max XYZ mG: [%6.2f,%6.2f] [%6.2f,%6.2f] [%6.2f,%6.2f]",
+    report_MinMax.Printf("XYZ mG [Min,Max]: [%6.2f,%6.2f] [%6.2f,%6.2f] [%6.2f,%6.2f]",
         minReadings_mG[0], maxReadings_mG[0], minReadings_mG[1], maxReadings_mG[1], minReadings_mG[2], maxReadings_mG[2]);
     m_CompassMinMax_staticText->SetLabel(report_MinMax);
     wxLogMessage(report_MinMax);
