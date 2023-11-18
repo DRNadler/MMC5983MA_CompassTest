@@ -20,7 +20,6 @@
 #include <wx/settings.h>
 #include <wx/stattext.h>
 #include <wx/sizer.h>
-#include <wx/statbox.h>
 #include <wx/textctrl.h>
 #include <wx/menu.h>
 #include <wx/timer.h>
@@ -40,6 +39,7 @@ class MyFrame_Base : public wxFrame
 		wxStaticText* m_CompassResult_staticText;
 		wxStaticText* m_CompassDetail_staticText;
 		wxStaticText* m_CompassOffsets_staticText;
+		wxStaticText* m_CompassMinMax_staticText;
 		wxTextCtrl* m_textCtrl_For_Logging;
 		wxMenuBar* m_menubar;
 		wxMenu* MyFileMenu;
@@ -54,7 +54,7 @@ class MyFrame_Base : public wxFrame
 
 	public:
 
-		MyFrame_Base( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = wxEmptyString, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 750,535 ), long style = wxCAPTION|wxDEFAULT_FRAME_STYLE|wxRESIZE_BORDER|wxTAB_TRAVERSAL );
+		MyFrame_Base( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = wxEmptyString, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 833,763 ), long style = wxCAPTION|wxDEFAULT_FRAME_STYLE|wxRESIZE_BORDER|wxTAB_TRAVERSAL );
 
 		~MyFrame_Base();
 

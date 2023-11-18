@@ -8,3 +8,5 @@ obj
 *.vcxproj.filters
 *.aps
 reference
+*.ods#
+/GainErrors.ods

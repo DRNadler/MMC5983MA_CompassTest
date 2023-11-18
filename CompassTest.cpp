@@ -169,8 +169,7 @@ void MyFrame::Make_A_Measurement() {
     wxString report_offset;
     report_offset.Printf("Offset mG: Average=%6.2f (%3.0f%% of nominal %6.2fmG), X=%6.2f, Y=%6.2f, Z=%6.2f",
         averageOffset_mG, 100.0 * averageOffset_mG / nominalFieldmG, nominalFieldmG,
-        offset_mG[0], offset_mG[1], offset_mG[2]
-    );
+        offset_mG[0], offset_mG[1], offset_mG[2] );
     m_CompassOffsets_staticText->SetLabelText(report_offset);
     report_offset.Replace("%", "%%"); // so wxLog doesn't expand percentage as a printf-style format specifier
     wxLogMessage(report_offset);
@@ -191,11 +190,21 @@ void MyFrame::Make_A_Measurement() {
     wxString report_FieldStrength;
     report_FieldStrength.Printf("Field mG: Total=%6.2f (%3.0f%% of nominal %6.2fmG), X=%6.2f, Y=%6.2f, Z=%6.2f",
         totalField_mG, 100*totalField_mG/nominalFieldmG, nominalFieldmG,
-        sensors_mG[0], sensors_mG[1], sensors_mG[2]
-        );
+        sensors_mG[0], sensors_mG[1], sensors_mG[2] );
     m_CompassDetail_staticText->SetLabel(report_FieldStrength);
     report_FieldStrength.Replace("%", "%%"); // so wxLog doesn't expand percentage as a printf-style format specifier
     wxLogMessage(report_FieldStrength);
+    //
+    static double minReadings_mG[3] = { 0.0, 0.0, 0.0 }, maxReadings_mG[3] = {0.0, 0.0, 0.0};
+    for (int i = 0; i < 3; i++) {
+        if (sensors_mG[i] < minReadings_mG[i]) minReadings_mG[i] = sensors_mG[i];
+        if (sensors_mG[i] > maxReadings_mG[i]) maxReadings_mG[i] = sensors_mG[i];
+    };
+    wxString report_MinMax;
+    report_MinMax.Printf("Min/Max XYZ mG: [%6.2f,%6.2f] [%6.2f,%6.2f] [%6.2f,%6.2f]",
+        minReadings_mG[0], maxReadings_mG[0], minReadings_mG[1], maxReadings_mG[1], minReadings_mG[2], maxReadings_mG[2]);
+    m_CompassMinMax_staticText->SetLabel(report_MinMax);
+    wxLogMessage(report_MinMax);
     //
     wxLogMessage("=======================================");
 }

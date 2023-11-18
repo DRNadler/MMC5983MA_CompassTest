@@ -13,35 +13,46 @@ MyFrame_Base::MyFrame_Base( wxWindow* parent, wxWindowID id, const wxString& tit
 {
 	this->SetSizeHints( wxDefaultSize, wxDefaultSize );
 
-	wxBoxSizer* topSizer;
-	topSizer = new wxBoxSizer( wxVERTICAL );
+	wxFlexGridSizer* topSizer;
+	topSizer = new wxFlexGridSizer( 0, 1, 0, 0 );
+	topSizer->AddGrowableRow( 1 );
+	topSizer->SetFlexibleDirection( wxBOTH );
+	topSizer->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_ALL );
 
-	wxStaticBoxSizer* ButtonAndResultSizer;
-	ButtonAndResultSizer = new wxStaticBoxSizer( new wxStaticBox( this, wxID_ANY, wxEmptyString ), wxHORIZONTAL );
+	wxFlexGridSizer* ButtonAndResult_fgSizer;
+	ButtonAndResult_fgSizer = new wxFlexGridSizer( 0, 2, 0, 0 );
+	ButtonAndResult_fgSizer->AddGrowableCol( 1 );
+	ButtonAndResult_fgSizer->SetFlexibleDirection( wxBOTH );
+	ButtonAndResult_fgSizer->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
 
-	m_StartStopButton = new wxButton( ButtonAndResultSizer->GetStaticBox(), wxID_ANY, wxT("Start/Stop"), wxDefaultPosition, wxDefaultSize, 0 );
-	ButtonAndResultSizer->Add( m_StartStopButton, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5 );
+	m_StartStopButton = new wxButton( this, wxID_ANY, wxT("Start/Stop"), wxDefaultPosition, wxDefaultSize, 0 );
+	ButtonAndResult_fgSizer->Add( m_StartStopButton, 0, wxALIGN_CENTER_VERTICAL|wxALL, 5 );
 
-	wxBoxSizer* bSizer2;
-	bSizer2 = new wxBoxSizer( wxVERTICAL );
+	wxBoxSizer* ResultSummary_bSizer;
+	ResultSummary_bSizer = new wxBoxSizer( wxVERTICAL );
 
-	m_CompassResult_staticText = new wxStaticText( ButtonAndResultSizer->GetStaticBox(), wxID_ANY, wxT("Heading 42.0 degrees"), wxDefaultPosition, wxDefaultSize, wxALIGN_LEFT );
+	ResultSummary_bSizer->SetMinSize( wxSize( 700,-1 ) );
+	m_CompassResult_staticText = new wxStaticText( this, wxID_ANY, wxT("Heading 42.0 degrees"), wxDefaultPosition, wxDefaultSize, wxALIGN_LEFT );
 	m_CompassResult_staticText->Wrap( -1 );
-	bSizer2->Add( m_CompassResult_staticText, 0, 0, 5 );
+	ResultSummary_bSizer->Add( m_CompassResult_staticText, 0, 0, 5 );
 
-	m_CompassDetail_staticText = new wxStaticText( ButtonAndResultSizer->GetStaticBox(), wxID_ANY, wxT("Field strength X,Y,Z, Total"), wxDefaultPosition, wxDefaultSize, wxALIGN_LEFT );
+	m_CompassDetail_staticText = new wxStaticText( this, wxID_ANY, wxT("Field strength X,Y,Z, Total"), wxDefaultPosition, wxDefaultSize, wxALIGN_LEFT );
 	m_CompassDetail_staticText->Wrap( -1 );
-	bSizer2->Add( m_CompassDetail_staticText, 0, 0, 5 );
+	ResultSummary_bSizer->Add( m_CompassDetail_staticText, 0, 0, 5 );
 
-	m_CompassOffsets_staticText = new wxStaticText( ButtonAndResultSizer->GetStaticBox(), wxID_ANY, wxT("Offset values in mG"), wxDefaultPosition, wxDefaultSize, wxALIGN_LEFT );
+	m_CompassOffsets_staticText = new wxStaticText( this, wxID_ANY, wxT("Offset values in mG"), wxDefaultPosition, wxDefaultSize, wxALIGN_LEFT );
 	m_CompassOffsets_staticText->Wrap( -1 );
-	bSizer2->Add( m_CompassOffsets_staticText, 0, 0, 5 );
+	ResultSummary_bSizer->Add( m_CompassOffsets_staticText, 0, 0, 5 );
+
+	m_CompassMinMax_staticText = new wxStaticText( this, wxID_ANY, wxT("Min/Max XYZ values in mG"), wxDefaultPosition, wxDefaultSize, wxALIGN_LEFT );
+	m_CompassMinMax_staticText->Wrap( -1 );
+	ResultSummary_bSizer->Add( m_CompassMinMax_staticText, 0, 0, 5 );
 
 
-	ButtonAndResultSizer->Add( bSizer2, 1, wxALL|wxEXPAND, 5 );
+	ButtonAndResult_fgSizer->Add( ResultSummary_bSizer, 1, wxALL|wxEXPAND, 5 );
 
 
-	topSizer->Add( ButtonAndResultSizer, 1, wxEXPAND, 5 );
+	topSizer->Add( ButtonAndResult_fgSizer, 1, wxEXPAND, 5 );
 
 	m_textCtrl_For_Logging = new wxTextCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE );
 	m_textCtrl_For_Logging->SetMinSize( wxSize( -1,300 ) );
