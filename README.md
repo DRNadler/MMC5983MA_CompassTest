@@ -2,6 +2,8 @@
 Either I'm doing something wrong (hardly ever happens), or the MMC5983MA is not working properly!
 I'd be delighted if anyone can report success with the MMC5983MA and show me where I've made a mistake!
 
+I've had problems getting sensible readings from this compass which seems to fail a basic sanity test.
+
 Rotating the MMC5983MA at a fixed point in space, it's measuring different field magnitudes;
 the magnitude should be constant.  Note magnitude is sqrt(X^2+Y^2+Z^2), and reported values range from 
 131% down to 76% of the expected local field strength for my location (from WMM World Magnetic Model).
@@ -18,8 +20,7 @@ Test program is a C++ 32-bit Windows program using wxWidgets, and communicating 
 Qwiic MMC5983A board using an Adafruit MCP2221 USB-to-Qwiic adapter.
 Included is the MMC5983A C++ device driver I wrote.
 
-# The datasheet has a number of issues:
-Datasheet Questions (MEMSIC MMC5983MA Rev A -- Formal release date: 4/3/2019)
+# MMC5983MA datasheet (MEMSIC MMC5983MA Rev A -- Formal release date: 4/3/2019) problems:
 The datasheet is seriously unclear on a number of points,
 and sometimes conflicts with MEMSIC's sample code.
 Unfortunately, I've had great difficulty getting sensible answers from MEMSIC technical support.
