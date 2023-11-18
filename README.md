@@ -9,6 +9,7 @@ the magnitude should be constant.  Note magnitude is sqrt(X^2+Y^2+Z^2), and repo
 131% down to 76% of the expected local field strength for my location (from WMM World Magnetic Model).
 So in the right ballpark and making measurements, but definitely something is wrong.
 [The file ExampleMagnitudeProblemLog.txt](ExampleMagnitudeProblemLog.txt) shows details of the erroneous readings.
+The range of magnitudes measure imply really large gain differences between axis, the auto-zero SET/RESET process does not really auto-zero, and/or some other issue?
 
 I'm following the datasheet here: https://www.memsic.com/Public/Uploads/uploadfile/files/20220119/MMC5983MADatasheetRevA.pdf
 This device has a SET/RESET function which gives a big pulse and resets the device,
