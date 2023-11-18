@@ -1,0 +1,10 @@
+.vs
+vc_mswud
+vc_mswud_x64
+bin
+obj
+*.bak
+*.vcxproj.user
+*.vcxproj.filters
+*.aps
+reference

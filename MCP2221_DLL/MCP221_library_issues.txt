@@ -1,0 +1,12 @@
+Three are several different ZIPs on the Microchip site.
+They seem to correspond to different versions of Visual Studio.
+
+Most recent version is for Visual Studio 2015.
+It includes:
+- a LIB version (all driver interface code is within the LIB)
+- a DLL version (the LIB contains only the thunks to invoke the DLL)
+These appear to be release builds only.
+
+The ONLY build success (in early 2021 tests) was with:
+- Release, x86
+- DLL version from Microchip
