@@ -432,7 +432,7 @@ int8_t MMC5983MA_C<TDEVICE>::Measure_XYZ_Field_WithResetSet()
 		MeasureAndReadRaw_XYZ(resultAfterSET);
 		// Compute offset (zero field value) and signed result for each sensor
 		for(int i=0; i<3; i++) {
-			offset[i] = (		   resultAfterSET[i] +			resultAfterRESET[i])/2;
+			offset[i] = (          resultAfterSET[i] +          resultAfterRESET[i])/2;
 			field [i] = (( int32_t)resultAfterSET[i] - (int32_t)resultAfterRESET[i])/2;
 		}
 	#else
