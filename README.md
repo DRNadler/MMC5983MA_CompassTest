@@ -1,5 +1,5 @@
 # MMC5983MA Compass Test - Quick-And-Dirty test showing field magnitude measurement problems
-Either I'm doing something wrong (hardly ever happens), or the MMC5983MA is not working properly!
+Either I'm doing something wrong (hardly ever happens), or the MMC5983MA is not working properly!</br>
 I'd be delighted if anyone can report success with the MMC5983MA and show me where I've made a mistake!
 
 I've had problems getting sensible readings from this compass which seems to fail a basic sanity test.
@@ -11,9 +11,11 @@ So in the right ballpark and making measurements, but definitely something is wr
 [The file ExampleMagnitudeProblemLog.txt](ExampleMagnitudeProblemLog.txt) shows details of the erroneous readings.
 The range of magnitudes measure imply really large gain differences between axis, the auto-zero SET/RESET process does not really auto-zero, and/or some other issue?
 
-I'm following the datasheet here: https://www.memsic.com/Public/Uploads/uploadfile/files/20220119/MMC5983MADatasheetRevA.pdf
+Further testing shows that there's a big offset in each axis. The RESET/SET degauss and sense-flip procedure is supposed to take out the offset (ie auto-zero each axis), except it's not working here. There's no hard offset in the test setup that would explain this behavior...
+
+I'm following the datasheet: https://www.memsic.com/Public/Uploads/uploadfile/files/20220119/MMC5983MADatasheetRevA.pdf
 This device has a SET/RESET function which gives a big pulse and resets the device,
-clearing any residual and setting the measurement polarity (reverses for SET vs RESET). 
+clearing any residual and setting the measurement polarity (these functions really should be called SET_REVERSE_POLARITY and SET_FORWARD_POLARITY). 
 Per the datasheet, I'm making a RESET, measuring, a SET, measuring.
 Then calculate the center-value (nominal zero-field output which MEMSIC calls _offset_) and measurement given two readings with opposite polarity.
 
