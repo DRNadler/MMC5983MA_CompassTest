@@ -97,7 +97,7 @@ bool MyApp::OnInit()
 
 // My frame constructor
 MyFrame::MyFrame(const wxString& title)
-       : MyFrame_Base(NULL, wxID_ANY, title, wxDefaultPosition, wxSize(600, 500))
+       : MyFrame_Base(NULL, wxID_ANY, title)
 {
     // Give it an icon
     SetIcon(wxICON(sample));
@@ -109,7 +109,7 @@ MyFrame::~MyFrame()
 {
     m_timer_TakeCompassReading.Stop();
     delete wxLog::SetActiveTarget(m_logOld);
-    // ToDo: mcp2221.Close(); // should close DLL/FT232H connection, ommission seems not to cause problems...
+    // ToDo: mcp2221.Close(); // should close DLL/FT232H connection, omission seems not to cause problems...
     delete pCompass;
     delete pCompassIO;
 }
@@ -200,7 +200,6 @@ void MyFrame::Make_A_Measurement() {
         if (sensors_mG[i] < minReadings_mG[i]) minReadings_mG[i] = sensors_mG[i];
         if (sensors_mG[i] > maxReadings_mG[i]) maxReadings_mG[i] = sensors_mG[i];
         avgReadings_mG[i] = (minReadings_mG[i] + maxReadings_mG[i]) / 2;
-
     };
     wxString report_MinMax;
     report_MinMax.Printf("XYZ mG [Min,Max]: [%6.2f,%6.2f] [%6.2f,%6.2f] [%6.2f,%6.2f]",
@@ -209,7 +208,7 @@ void MyFrame::Make_A_Measurement() {
     wxLogMessage(report_MinMax);
     //
     wxString report_AvgMinMax;
-    report_AvgMinMax.Printf("XYZ averageMinMax (observed offset): %6.2f, %6.2f, %6.2f", avgReadings_mG[0], avgReadings_mG[1], avgReadings_mG[2]);
+    report_AvgMinMax.Printf("XYZ averageMinMax (observed additional offset): %6.2f, %6.2f, %6.2f", avgReadings_mG[0], avgReadings_mG[1], avgReadings_mG[2]);
     m_ObservedCompassOffsets_staticText->SetLabel(report_AvgMinMax);
     wxLogMessage(report_AvgMinMax);
     //

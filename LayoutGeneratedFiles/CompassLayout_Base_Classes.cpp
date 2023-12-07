@@ -22,7 +22,7 @@ MyFrame_Base::MyFrame_Base( wxWindow* parent, wxWindowID id, const wxString& tit
 	wxFlexGridSizer* ButtonAndResult_fgSizer;
 	ButtonAndResult_fgSizer = new wxFlexGridSizer( 0, 2, 0, 0 );
 	ButtonAndResult_fgSizer->AddGrowableCol( 1 );
-	ButtonAndResult_fgSizer->SetFlexibleDirection( wxBOTH );
+	ButtonAndResult_fgSizer->SetFlexibleDirection( wxHORIZONTAL );
 	ButtonAndResult_fgSizer->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
 
 	m_StartStopButton = new wxButton( this, wxID_ANY, wxT("Start/Stop"), wxDefaultPosition, wxDefaultSize, 0 );
