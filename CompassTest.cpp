@@ -148,7 +148,7 @@ void MyFrame::StartStopClicked(wxCommandEvent&) {
 void MyFrame::Make_A_Measurement() {
     const double nominalFieldmG = 512.63; // ~ strength of Earth's field at Dave's desk; see below.
     wxLogMessage("Measure_XYZ_Field_WithResetSet...");
-    pCompass->Measure_XYZ_Field_WithResetSet();
+    pCompass->Measure_XYZ_Field_With_REVERSE_SET_and_SET();
     wxLogMessage("-----------");
     wxLogMessage("Compass: offsets (nominal 0x20000): x%05lx, x%05lx, x%05lx", pCompass->offset[0], pCompass->offset[1], pCompass->offset[2]);
     wxLogMessage("Compass: sensors (adjusted for offset): x%05lx, x%05lx, x%05lx", pCompass->field[0], pCompass->field[1], pCompass->field[2]);

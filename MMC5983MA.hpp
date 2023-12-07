@@ -165,15 +165,17 @@ class MMC5983MA_C {
 		Setting_Enable_MeasurementDoneINT = 0x04, ///< Set 1 to enable the completed measurement interrupt.
 							///< When a magnetic or temperature measurement finishes, an
 							///< interrupt will be signaled.
-		Action_SET = 0x08,	///< Writing 1 starts the SET operation, which sends a large set current
+		Action_SET = 0x08,	///< Writing 1 starts the SET operation, which sends a large current
 							///< through the sensor coils for 500ns.
-							///< Automatically reset to 0 at the end of the Set operation.
-		Action_RESET = 0x10,///< Writing 1 starts the RESET operation, which sends a large reset current
-							///< (opposite direction of 'Set') through the sensor coils for 500ns.
-							///< Automatically reset to 0 at the end of the Set operation.
-		Setting_Auto_SR_en = 0x20,///< Set 1 to enable automatic set/reset.
+							///< Automatically reset to 0 at the end of the SET operation.
+		Action_REVERSE_SET = 0x10,///< Writing 1 starts the REVERSE_SET operation (MEMSIC calls this RESET),
+							///< which sends a large reverse current (in the opposite direction of SET)
+							///< through the sensor coils for 500ns.
+							///< Automatically reset to 0 at the end of the REVERSE_SET operation.
+		Setting_Auto_SR_en = 0x20,///< Set 1 to enable automatic SET/REVERSE_SET.
 		Action_OTP_Read = 0x40,///< Writing 1 commands the device to read the OTP data again.
 							///< Automatically reset to 0 after the shadow registers for OTP are refreshed.
+							///< Should never be required according to MEMSIC support.
 	};
 	const static uint8_t Product_ID_Assigned = 0x30; // MMC5983MA product ID value
 	enum class Control_1_Mask : uint8_t {
@@ -209,7 +211,7 @@ class MMC5983MA_C {
 
 	/// Read the magnetic field, including a Set/Reset operation
 	/// to compute offset. Place results in field and offset members.
-	int8_t Measure_XYZ_Field_WithResetSet();
+	int8_t Measure_XYZ_Field_With_REVERSE_SET_and_SET();
 
 	int32_t field[3] = {0}; ///< Last magnetic field reading set (X,Y,Z), signed values already adjusted with offsets.
 	const static int32_t CountsPerGauss = 16384; // when using full 18-bit resolution as we do here.
@@ -307,11 +309,11 @@ class MMC5983MA_C {
 		WriteControlAction(ControlRegister::Control_0, (uint8_t)Control_0_Mask::Action_SET);
 		dev.delay_us(1); // 500ns required
 	}
-	/// Perform RESET including required wait.
-	inline void RESET(void)
+	/// Perform REVERSE_SET including required wait.
+	inline void REVERSE_SET(void)
 	{
-		// ToDo MMC5983MA: assert not in continuous mode for RESET ???
-		WriteControlAction(ControlRegister::Control_0, (uint8_t)Control_0_Mask::Action_RESET);
+		// ToDo MMC5983MA: assert not in continuous mode for REVERSE_SET ???
+		WriteControlAction(ControlRegister::Control_0, (uint8_t)Control_0_Mask::Action_REVERSE_SET);
 		dev.delay_us(1); // 500ns required
 	}
 
@@ -419,21 +421,21 @@ int8_t MMC5983MA_C<TDEVICE>::set_regs(Register reg, const uint8_t (&reg_data)[],
 }
 
 template <typename TDEVICE>
-int8_t MMC5983MA_C<TDEVICE>::Measure_XYZ_Field_WithResetSet()
+int8_t MMC5983MA_C<TDEVICE>::Measure_XYZ_Field_With_REVERSE_SET_and_SET()
 {
-	#ifndef MMC5983MA_CONTINUOUS_MODE // RESET-SET don't make sense in continuous mode
-		uint32_t resultAfterSET[3] = {0}, resultAfterRESET[3] = {0};
-		RESET(); // now reading ::= -H + Offset
+	#ifndef MMC5983MA_CONTINUOUS_MODE // REVERSE_SET-SET don't make sense in continuous mode
+		uint32_t resultAfterSET[3] = {0}, resultAfterREVERSE_SET[3] = {0};
+		REVERSE_SET(); // now reading ::= -H + Offset
 		const int delayUsec = 50000; // ToDo MMC5983MA: remove extra delays?
 		DiagPrintf("delay %d usecs\n", delayUsec); dev.delay_us(delayUsec);
-		MeasureAndReadRaw_XYZ(resultAfterRESET);
+		MeasureAndReadRaw_XYZ(resultAfterREVERSE_SET);
 		SET(); // now reading ::= +H + Offset
 		DiagPrintf("delay %d usecs\n", delayUsec); dev.delay_us(delayUsec); // ToDo MMC5983MA: remove extra 100msec delay??
 		MeasureAndReadRaw_XYZ(resultAfterSET);
 		// Compute offset (zero field value) and signed result for each sensor
 		for(int i=0; i<3; i++) {
-			offset[i] = (          resultAfterSET[i] +          resultAfterRESET[i])/2;
-			field [i] = (( int32_t)resultAfterSET[i] - (int32_t)resultAfterRESET[i])/2;
+			offset[i] = (          resultAfterSET[i] +          resultAfterREVERSE_SET[i])/2;
+			field [i] = (( int32_t)resultAfterSET[i] - (int32_t)resultAfterREVERSE_SET[i])/2;
 		}
 	#else
 		uint32_t result[3] = {0};

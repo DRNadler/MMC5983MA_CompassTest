@@ -1,0 +1,2 @@
+This wxWidgets COmpassTest application builds and runs AOK as 32-bit or 64-bit.
+The supporting MCP2221 libraries are used as DLLs in both cases.
