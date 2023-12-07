@@ -42,10 +42,10 @@
             <property name="hidden">0</property>
             <property name="id">wxID_ANY</property>
             <property name="maximum_size"></property>
-            <property name="minimum_size"></property>
+            <property name="minimum_size">700,-1</property>
             <property name="name">MyFrame_Base</property>
             <property name="pos"></property>
-            <property name="size">833,763</property>
+            <property name="size">700,763</property>
             <property name="style">wxCAPTION|wxDEFAULT_FRAME_STYLE|wxRESIZE_BORDER</property>
             <property name="subclass">; ; forward_declare</property>
             <property name="title"></property>
@@ -318,7 +318,7 @@
                                         <property name="gripper">0</property>
                                         <property name="hidden">0</property>
                                         <property name="id">wxID_ANY</property>
-                                        <property name="label">Offset values from RESET/SET in mG</property>
+                                        <property name="label">RESET/SET Offset mG: Average, ie = 88.87 ( 17% of nominal 512.63mG), X=  8.48, Y=-243.23, Z= 14.89</property>
                                         <property name="markup">0</property>
                                         <property name="max_size"></property>
                                         <property name="maximize_button">0</property>

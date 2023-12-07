@@ -11,7 +11,7 @@
 
 MyFrame_Base::MyFrame_Base( wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long style ) : wxFrame( parent, id, title, pos, size, style )
 {
-	this->SetSizeHints( wxDefaultSize, wxDefaultSize );
+	this->SetSizeHints( wxSize( 700,-1 ), wxDefaultSize );
 
 	wxFlexGridSizer* topSizer;
 	topSizer = new wxFlexGridSizer( 0, 1, 0, 0 );
@@ -40,7 +40,7 @@ MyFrame_Base::MyFrame_Base( wxWindow* parent, wxWindowID id, const wxString& tit
 	m_CompassDetail_staticText->Wrap( -1 );
 	ResultSummary_bSizer->Add( m_CompassDetail_staticText, 0, 0, 5 );
 
-	m_CompassOffsets_staticText = new wxStaticText( this, wxID_ANY, wxT("Offset values from RESET/SET in mG"), wxDefaultPosition, wxDefaultSize, wxALIGN_LEFT );
+	m_CompassOffsets_staticText = new wxStaticText( this, wxID_ANY, wxT("RESET/SET Offset mG: Average, ie = 88.87 ( 17% of nominal 512.63mG), X=  8.48, Y=-243.23, Z= 14.89"), wxDefaultPosition, wxDefaultSize, wxALIGN_LEFT );
 	m_CompassOffsets_staticText->Wrap( -1 );
 	ResultSummary_bSizer->Add( m_CompassOffsets_staticText, 0, 0, 5 );
 

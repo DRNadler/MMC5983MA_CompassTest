@@ -214,6 +214,8 @@ void MyFrame::Make_A_Measurement() {
     wxLogMessage(report_AvgMinMax);
     //
     wxLogMessage("=======================================");
+    // No effect: this->Layout();
+    // No effect: SendSizeEvent();
 }
 
 // ----------------------------------------------------------------------------
