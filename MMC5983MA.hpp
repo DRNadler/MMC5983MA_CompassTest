@@ -214,7 +214,7 @@ class MMC5983MA_C {
 	int8_t Measure_XYZ_Field_With_REVERSE_SET_and_SET();
 
 	int32_t field[3] = {0}; ///< Last magnetic field reading set (X,Y,Z), signed values already adjusted with offsets.
-	const static int32_t CountsPerGauss = 16384; // when using full 18-bit resolution as we do here.
+	const static int32_t CountsPerGauss = 16384; // 2^17 / 8G full-scale when using full 18-bit resolution as we do here.
 
 	/// Each sensor's offset is the unsigned integer value the sensor will read
 	/// with zero external field. Should be about mid-range for 18-bit value,

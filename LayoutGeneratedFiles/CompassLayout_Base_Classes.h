@@ -40,6 +40,7 @@ class MyFrame_Base : public wxFrame
 		wxStaticText* m_CompassDetail_staticText;
 		wxStaticText* m_CompassOffsets_staticText;
 		wxStaticText* m_CompassMinMax_staticText;
+		wxStaticText* m_ObservedCompassOffsets_staticText;
 		wxTextCtrl* m_textCtrl_For_Logging;
 		wxMenuBar* m_menubar;
 		wxMenu* MyFileMenu;

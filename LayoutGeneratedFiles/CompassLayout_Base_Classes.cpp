@@ -40,13 +40,17 @@ MyFrame_Base::MyFrame_Base( wxWindow* parent, wxWindowID id, const wxString& tit
 	m_CompassDetail_staticText->Wrap( -1 );
 	ResultSummary_bSizer->Add( m_CompassDetail_staticText, 0, 0, 5 );
 
-	m_CompassOffsets_staticText = new wxStaticText( this, wxID_ANY, wxT("Offset values in mG"), wxDefaultPosition, wxDefaultSize, wxALIGN_LEFT );
+	m_CompassOffsets_staticText = new wxStaticText( this, wxID_ANY, wxT("Offset values from RESET/SET in mG"), wxDefaultPosition, wxDefaultSize, wxALIGN_LEFT );
 	m_CompassOffsets_staticText->Wrap( -1 );
 	ResultSummary_bSizer->Add( m_CompassOffsets_staticText, 0, 0, 5 );
 
 	m_CompassMinMax_staticText = new wxStaticText( this, wxID_ANY, wxT("Min/Max XYZ values in mG"), wxDefaultPosition, wxDefaultSize, wxALIGN_LEFT );
 	m_CompassMinMax_staticText->Wrap( -1 );
 	ResultSummary_bSizer->Add( m_CompassMinMax_staticText, 0, 0, 5 );
+
+	m_ObservedCompassOffsets_staticText = new wxStaticText( this, wxID_ANY, wxT("Offset XYZ from Min/Max values in mG"), wxDefaultPosition, wxDefaultSize, wxALIGN_LEFT );
+	m_ObservedCompassOffsets_staticText->Wrap( -1 );
+	ResultSummary_bSizer->Add( m_ObservedCompassOffsets_staticText, 0, 0, 5 );
 
 
 	ButtonAndResult_fgSizer->Add( ResultSummary_bSizer, 1, wxALL|wxEXPAND, 5 );

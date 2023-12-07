@@ -150,7 +150,7 @@ void MyFrame::Make_A_Measurement() {
     wxLogMessage("Measure_XYZ_Field_WithResetSet...");
     pCompass->Measure_XYZ_Field_With_REVERSE_SET_and_SET();
     wxLogMessage("-----------");
-    wxLogMessage("Compass: offsets (nominal 0x20000): x%05lx, x%05lx, x%05lx", pCompass->offset[0], pCompass->offset[1], pCompass->offset[2]);
+    wxLogMessage("Compass: SET/RESET offsets (zero-point, nominal 0x20000): x%05lx, x%05lx, x%05lx", pCompass->offset[0], pCompass->offset[1], pCompass->offset[2]);
     wxLogMessage("Compass: sensors (adjusted for offset): x%05lx, x%05lx, x%05lx", pCompass->field[0], pCompass->field[1], pCompass->field[2]);
     //
     // WAG as to sign and X vs. Y orientation
@@ -167,7 +167,7 @@ void MyFrame::Make_A_Measurement() {
         averageOffset_mG += abs(offset_mG[i])/3;
     };
     wxString report_offset;
-    report_offset.Printf("Offset mG: Average=%6.2f (%3.0f%% of nominal %6.2fmG), X=%6.2f, Y=%6.2f, Z=%6.2f",
+    report_offset.Printf("RESET/SET Offset mG: Average=%6.2f (%3.0f%% of nominal %6.2fmG), X=%6.2f, Y=%6.2f, Z=%6.2f",
         averageOffset_mG, 100.0 * averageOffset_mG / nominalFieldmG, nominalFieldmG,
         offset_mG[0], offset_mG[1], offset_mG[2] );
     m_CompassOffsets_staticText->SetLabelText(report_offset);
@@ -195,16 +195,23 @@ void MyFrame::Make_A_Measurement() {
     report_FieldStrength.Replace("%", "%%"); // so wxLog doesn't expand percentage as a printf-style format specifier
     wxLogMessage(report_FieldStrength);
     //
-    static double minReadings_mG[3] = { 0.0, 0.0, 0.0 }, maxReadings_mG[3] = {0.0, 0.0, 0.0};
+    static double minReadings_mG[3] = { 0.0, 0.0, 0.0 }, maxReadings_mG[3] = {0.0, 0.0, 0.0}, avgReadings_mG[3] = { 0.0, 0.0, 0.0 };
     for (int i = 0; i < 3; i++) {
         if (sensors_mG[i] < minReadings_mG[i]) minReadings_mG[i] = sensors_mG[i];
         if (sensors_mG[i] > maxReadings_mG[i]) maxReadings_mG[i] = sensors_mG[i];
+        avgReadings_mG[i] = (minReadings_mG[i] + maxReadings_mG[i]) / 2;
+
     };
     wxString report_MinMax;
     report_MinMax.Printf("XYZ mG [Min,Max]: [%6.2f,%6.2f] [%6.2f,%6.2f] [%6.2f,%6.2f]",
         minReadings_mG[0], maxReadings_mG[0], minReadings_mG[1], maxReadings_mG[1], minReadings_mG[2], maxReadings_mG[2]);
     m_CompassMinMax_staticText->SetLabel(report_MinMax);
     wxLogMessage(report_MinMax);
+    //
+    wxString report_AvgMinMax;
+    report_AvgMinMax.Printf("XYZ averageMinMax (observed offset): %6.2f, %6.2f, %6.2f", avgReadings_mG[0], avgReadings_mG[1], avgReadings_mG[2]);
+    m_ObservedCompassOffsets_staticText->SetLabel(report_AvgMinMax);
+    wxLogMessage(report_AvgMinMax);
     //
     wxLogMessage("=======================================");
 }
