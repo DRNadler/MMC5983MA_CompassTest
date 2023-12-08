@@ -12,6 +12,8 @@ So in the right ballpark and making measurements, but definitely something is wr
 The range of magnitudes measure imply really large gain differences between axis, the auto-zero SET/RESET process does not really auto-zero, and/or some other issue?
 
 Further testing shows that there's a big offset in each axis. The RESET/SET degauss and sense-flip procedure is supposed to take out the offset (ie auto-zero each axis), except it's not working here. There's no hard offset in the test setup that would explain this behavior...
+Here's an example after rotating the sensor to try find min and max for each axis:
+![offset image](./MinMax_XYZ_search.PNG)
 
 I'm following the datasheet: https://www.memsic.com/Public/Uploads/uploadfile/files/20220119/MMC5983MADatasheetRevA.pdf
 This device has a SET/RESET function which gives a big pulse and resets the device,
@@ -32,7 +34,7 @@ Unfortunately, I've had great difficulty getting sensible answers from MEMSIC te
    - a) Is it necessary to write TM_M to start measurements in continuous mode?
    - b) In continuous mode, is Meas_M_Done ever set?
    - c) Are TM_M and Meas_M_Done only for one-shot measurements?
-   - d) Does temperature measurement require continuous pressure mode to be turned off?
+   - d) Does temperature measurement require continuous pressure mode to be turned off?</br>
       ANSWERED SORT-OF: **Temperature sensor does not really work, don't use it.**
 2) Can SET and RESET used while continuous mode is enabled?
 3) The use and behavior of auto-SET-RESET is not documented:
