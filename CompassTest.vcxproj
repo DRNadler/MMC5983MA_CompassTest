@@ -572,7 +572,7 @@
     <ClCompile Include="CompassTest.cpp" />
     <ClCompile Include="LayoutGeneratedFiles\CompassLayout_Base_Classes.cpp" />
     <ClCompile Include="MCP2221.cpp" />
-    <ClCompile Include="MMC5983MA_IO_WindowsQwiic.cpp" />
+    <ClCompile Include="MMC5983MA_IO_WindowsQwiic_MCP2221.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CompassTest.h" />
@@ -580,7 +580,7 @@
     <ClInclude Include="MCP2221.hpp" />
     <ClInclude Include="MMC5983MA.hpp" />
     <ClInclude Include="MMC5983MA_IO.hpp" />
-    <ClInclude Include="MMC5983MA_IO_WindowsQwiic.hpp" />
+    <ClInclude Include="MMC5983MA_IO_WindowsQwiic_MCP2221.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="CompassTest.rc" />

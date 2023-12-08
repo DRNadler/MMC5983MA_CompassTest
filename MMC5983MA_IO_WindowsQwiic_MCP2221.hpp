@@ -1,4 +1,4 @@
-// MMC5983MA_IO_WindowsQwiic.hpp - IO class for accessing MMC5983MA via MCP2221
+// MMC5983MA_IO_WindowsQwiic_MCP2221.hpp - IO class for accessing MMC5983MA via MCP2221
 
 /*
 MIT License
@@ -24,17 +24,17 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#ifndef MMC5983MA_IO_WindowsQwiic_HPP_INCLUDED
-#define MMC5983MA_IO_WindowsQwiic_HPP_INCLUDED
+#ifndef MMC5983MA_IO_WindowsQwiic_MCP2221_HPP_INCLUDED
+#define MMC5983MA_IO_WindowsQwiic_MCP2221_HPP_INCLUDED
 
 #include "MMC5983MA_IO.hpp"
 #include "MCP2221.hpp"
 
 // Provide IO primitives for MMC5983MA API
-class MMC5983MA_IO_WindowsQwiic_C : public MMC5983MA_IO_base_C {
+class MMC5983MA_IO_WindowsQwiic_MCP2221_C : public MMC5983MA_IO_base_C {
 public:
     MCP2221& mcp2221; // IO device
-    MMC5983MA_IO_WindowsQwiic_C(MCP2221& _mcp2221) : mcp2221(_mcp2221), MMC5983MA_IO_base_C(I2C) {}; // Warning: no communications initialization in ctor
+    MMC5983MA_IO_WindowsQwiic_MCP2221_C(MCP2221& _mcp2221) : mcp2221(_mcp2221), MMC5983MA_IO_base_C(I2C) {}; // Warning: no communications initialization in ctor
     // Replace the base class IO function suggestions with implementations in this derived class
     void read(uint8_t reg_addr, uint8_t(&read_data)[], uint32_t len);
     void write(uint8_t reg_addr, const uint8_t(&write_data)[], uint32_t len);
@@ -46,4 +46,4 @@ public:
     const static uint8_t slave7bitAddress = (0b0110000); // The MEMSIC device 7 - bit device WRITE address is[0110000] (left-shifted, then optional OR'd with read-bit 1)
 };
 
-#endif // MMC5983MA_IO_WindowsQwiic_HPP_INCLUDED
+#endif // MMC5983MA_IO_WindowsQwiic_MCP2221_HPP_INCLUDED

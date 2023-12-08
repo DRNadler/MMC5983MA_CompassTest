@@ -1,4 +1,4 @@
-// MMC5983MA_IO_WindowsQwiic - Windows Qwiic IO to MMC5983, using MCP2221 USB adapter.
+// MMC5983MA_IO_WindowsQwiic_MCP2221 - Windows Qwiic IO to MMC5983, using MCP2221 USB adapter.
 
 /*
 MIT License
@@ -28,10 +28,10 @@ SOFTWARE.
 #include <thread>
 
 #include "MCP2221.hpp"
-#include "MMC5983MA_IO_WindowsQwiic.hpp"
+#include "MMC5983MA_IO_WindowsQwiic_MCP2221.hpp"
 
 
-void MMC5983MA_IO_WindowsQwiic_C::init() {
+void MMC5983MA_IO_WindowsQwiic_MCP2221_C::init() {
     assert(mcp2221.IsOpen());
     // Other actions???
     #if 0 // FTDI attempt - could not get Adafruit FT232H USB-C - I2C adapter to work...
@@ -55,7 +55,7 @@ void MMC5983MA_IO_WindowsQwiic_C::init() {
         printf("MMC5983MA_IO_WindowsQwiic_C::init opened and initialized channel AOK\n");
     #endif
 }
-void  MMC5983MA_IO_WindowsQwiic_C::read(uint8_t registerAddress, uint8_t(&read_data)[], uint32_t len) {
+void  MMC5983MA_IO_WindowsQwiic_MCP2221_C::read(uint8_t registerAddress, uint8_t(&read_data)[], uint32_t len) {
     assert(mcp2221.IsOpen());
     // 4,5) write start-bit/slave address, then register address (should wait for ACK)
     int ret1 = mcp2221.Mcp2221_I2cWrite(1, slave7bitAddress, true, &registerAddress);
@@ -64,7 +64,7 @@ void  MMC5983MA_IO_WindowsQwiic_C::read(uint8_t registerAddress, uint8_t(&read_d
     int ret2 = mcp2221.Mcp2221_I2cRead(len, slave7bitAddress, true, read_data);
     assert(ret2 == 0);
 }
-void MMC5983MA_IO_WindowsQwiic_C::write(uint8_t registerAddress, const uint8_t(&write_data)[], uint32_t len) {
+void MMC5983MA_IO_WindowsQwiic_MCP2221_C::write(uint8_t registerAddress, const uint8_t(&write_data)[], uint32_t len) {
     assert(mcp2221.IsOpen());
     // Note: MMC5983MA DOES auto-increment write address
     // Anyway, API only ever writes 1 byte here.
@@ -73,6 +73,6 @@ void MMC5983MA_IO_WindowsQwiic_C::write(uint8_t registerAddress, const uint8_t(&
     int ret1 = mcp2221.Mcp2221_I2cWrite(2, slave7bitAddress, true, buf);
     assert(ret1 == 0);
 }
-void MMC5983MA_IO_WindowsQwiic_C::delay_us(uint32_t uSecs) {
+void MMC5983MA_IO_WindowsQwiic_MCP2221_C::delay_us(uint32_t uSecs) {
     std::this_thread::sleep_for(std::chrono::microseconds(uSecs));
 }

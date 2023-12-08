@@ -52,7 +52,7 @@ SOFTWARE.
 #include "MCP2221.hpp"
 #include "mcp2221_dll_um.h"
 
-#include "MMC5983MA_IO_WindowsQwiic.hpp"
+#include "MMC5983MA_IO_WindowsQwiic_MCP2221.hpp"
 #include "MMC5983MA.hpp"
 
 #include "CompassTest.h"
@@ -62,8 +62,8 @@ SOFTWARE.
 // Globals for compass including IO support via MCP2221
 // ----------------------------------------------------------------------------
 MCP2221 mcp2221;
-MMC5983MA_IO_WindowsQwiic_C* pCompassIO = 0;
-typedef MMC5983MA_C< MMC5983MA_IO_WindowsQwiic_C> MMC5983MA_C_local;
+MMC5983MA_IO_WindowsQwiic_MCP2221_C* pCompassIO = 0;
+typedef MMC5983MA_C< MMC5983MA_IO_WindowsQwiic_MCP2221_C> MMC5983MA_C_local;
 MMC5983MA_C_local* pCompass = 0;
 
 
@@ -131,8 +131,8 @@ void MyFrame::StartStopClicked(wxCommandEvent&) {
     if (!mcp2221.IsOpen()) {
         mcp2221.Init(); // locate and open an MCP2221 USB-to-Qwiic device
         wxLogMessage("%d MCP2221s found connected to this PC; first one opened OK.", mcp2221.connectedDevices);
-        pCompassIO = new MMC5983MA_IO_WindowsQwiic_C(mcp2221);
-        pCompass = new MMC5983MA_C< MMC5983MA_IO_WindowsQwiic_C>(*pCompassIO);
+        pCompassIO = new MMC5983MA_IO_WindowsQwiic_MCP2221_C(mcp2221);
+        pCompass = new MMC5983MA_C< MMC5983MA_IO_WindowsQwiic_MCP2221_C>(*pCompassIO);
         pCompass->Init(); // resets, verifies compass product ID over I2C bus, throws on failure
         assert(pCompass->initialized);
         wxLogMessage("Compass initialized AOK");
