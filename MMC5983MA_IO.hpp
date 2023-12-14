@@ -26,14 +26,13 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-
 #ifndef MMC5983A_IO_HPP_INCLUDED
 #define MMC5983A_IO_HPP_INCLUDED
 
 /// You must provide a class TDEVICE implementing platform-specific device IO
 /// to the MMC5983MA_C template. Either:
-/// a) Implement MMC5983MA_C members directly, or
-/// b) Implement a derived class, adding any required instance data (ie chip select used).
+/// a) Implement MMC5983MA_IO_base_C members directly, or
+/// b) Implement a derived class, adding any required instance data (ie chip select used, error details).
 /// Note: Using a template avoids all indirect call overhead (from virtual functions or C function pointers).
 class MMC5983MA_IO_base_C {
   public:
@@ -48,6 +47,12 @@ class MMC5983MA_IO_base_C {
 	void delay_us(uint32_t uSecs);
 	/// Did last IO operation succeed?
 	bool IO_OK();
+	/// Application must implement printf-analog if MMC5983MA_PRINT_DETAILED_LOG is defined in MMC5983MA_C
+	#ifdef __GNUG__
+		int DiagPrintf(const char* format, ...); __attribute__((format(printf, 2, 3)));
+	#else
+		int DiagPrintf(const char* format, ...); // __attribute__((format(printf, 2, 3)));
+	#endif
 
 	MMC5983MA_IO_base_C(InterfaceType_T interfaceType_) : interfaceType(interfaceType_) {};
 };

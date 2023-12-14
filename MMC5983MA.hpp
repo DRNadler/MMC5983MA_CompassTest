@@ -31,11 +31,11 @@ SOFTWARE.
 // ToDo MMC5983MA: Implement continuous mode? Currently 4ms delay per measurement.
 // ToDo MMC5983MA: Complete MMC5983MA_CONTINUOUS_MODE - no readings as coded
 // #define MMC5983MA_CONTINUOUS_MODE // default as coded is one-shot
-#define PRINT_DETAILED_LOG
+#define MMC5983MA_PRINT_DETAILED_LOG
 
 /*
 Datasheet Questions (MEMSIC MMC5983MA Rev A -- Formal release date: 4/3/2019)
-The datasheet is seriously unclear on a number of points,
+The datasheet is seriously unclear on many points,
 and sometimes conflicts with MEMSIC's sample code...
 
 1) Continuous mode vs. one-shot mode aren't well documented.
@@ -43,7 +43,7 @@ and sometimes conflicts with MEMSIC's sample code...
    b) In continuous mode, is Meas_M_Done ever set?
    c) Are TM_M and Meas_M_Done only for one-shot measurements?
    d) Does temperature measurement require continuous pressure mode to be turned off?
-      ANSWERED SORT-OF: Temperture sensor does not really work, don't use it.
+      ANSWERED SORT-OF: Temperature sensor does not really work, don't use it.
 2) Can SET and RESET used while continuous mode is enabled?
 3) The use and behavior of auto-SET-RESET is not documented:
    a) What is the PURPOSE of auto-SET-RESET?
@@ -175,7 +175,7 @@ class MMC5983MA_C {
 		Setting_Auto_SR_en = 0x20,///< Set 1 to enable automatic SET/REVERSE_SET.
 		Action_OTP_Read = 0x40,///< Writing 1 commands the device to read the OTP data again.
 							///< Automatically reset to 0 after the shadow registers for OTP are refreshed.
-							///< Should never be required according to MEMSIC support.
+							///< MEMSIC support: Should never be required.
 	};
 	const static uint8_t Product_ID_Assigned = 0x30; // MMC5983MA product ID value
 	enum class Control_1_Mask : uint8_t {
@@ -207,11 +207,11 @@ class MMC5983MA_C {
 	int8_t Init();
 
 	// State and measurement information
-	bool initialized; ///< false until init() is called and succeeds
+	bool initialized; ///< false until Init() is called and succeeds
 
-	/// Read the magnetic field, including a Set/Reset operation
+	/// Read the magnetic field, including the reverse/normal degauss operation
 	/// to compute offset. Place results in field and offset members.
-	int8_t Measure_XYZ_Field_With_REVERSE_SET_and_SET();
+	int8_t Measure_XYZ_With_Degauss();
 
 	int32_t field[3] = {0}; ///< Last magnetic field reading set (X,Y,Z), signed values already adjusted with offsets.
 	const static int32_t CountsPerGauss = 16384; // 2^17 / 8G full-scale when using full 18-bit resolution as we do here.
@@ -220,8 +220,6 @@ class MMC5983MA_C {
 	/// with zero external field. Should be about mid-range for 18-bit value,
 	/// ie 2^17 = 0x20000 = 131072.
 	uint32_t offset[3] = {0};  ///< Last measured offset (X,Y,Z) - always included in lastReading
-
-	int DiagPrintf(const char* format, ...); // user must implement printf-analog if PRINT_DETAILED_LOG is defined
 
   protected:
 
@@ -260,7 +258,7 @@ class MMC5983MA_C {
 		uint8_t &setting = GetSettingRef(controlReg);
 		setting &= ~settingMask; // mask out prior setting(s), and
 		setting |= settingValue; // OR in new setting(s)
-		// Write updated in-memory value to the sensor
+		// Write updated in-memory value to the sensor (any "Action" bits will be 0)
 		set_reg((Register)controlReg, setting);
 	}
 	/// Command an action via a control register
@@ -273,7 +271,7 @@ class MMC5983MA_C {
 	void SetBandwidth(Bandwidth_T bw) {
 		WriteControlSetting(ControlRegister::Control_1, (uint8_t)Control_1_Mask::Setting_Bandwidth, (uint8_t)bw);
 	}
-	Bandwidth_T GetBandwidth(void) {
+	Bandwidth_T GetBandwidth(void) const {
 		return (Bandwidth_T)(control_settings[1] & (int)Control_1_Mask::Setting_Bandwidth);
 	};
 	int GetuSecPerMeasurement(void) { return uSecPerMeasurement(GetBandwidth()); };
@@ -302,27 +300,39 @@ class MMC5983MA_C {
 		return set_regs(reg, GetConstArrayRefFromSingle(singleByte), 1);
 	}
 
-	/// Perform SET including required wait.
-	inline void SET(void)
+	/// Perform normal degauss pulse (SET) including required wait.
+	inline void DegaussPulse_Normal(void)
 	{
 		// ToDo MMC5983MA: assert not in continuous mode for SET ???
 		WriteControlAction(ControlRegister::Control_0, (uint8_t)Control_0_Mask::Action_SET);
 		dev.delay_us(1); // 500ns required
 	}
-	/// Perform REVERSE_SET including required wait.
-	inline void REVERSE_SET(void)
+	/// Perform reverse degauss pulse (REVERSE_SET/RESET) including required wait.
+	inline void DegaussPulse_Reverse(void)
 	{
 		// ToDo MMC5983MA: assert not in continuous mode for REVERSE_SET ???
 		WriteControlAction(ControlRegister::Control_0, (uint8_t)Control_0_Mask::Action_REVERSE_SET);
 		dev.delay_us(1); // 500ns required
 	}
 
-    /// Make and measurement, then read XYZ registers (returns 3 unsigned 18-bit quantities)
-	inline void MeasureAndReadRaw_XYZ(uint32_t (&result)[3])
+    /// Fetch the XYZ results (3 raw unsigned 18-bit values)
+    inline void Fetch_XYZ(uint32_t (&result)[3]) {
+        uint8_t rawBytes[7];
+        get_regs(Register::X_out_0, rawBytes, sizeof(rawBytes)); // 7 sequential field measurement bytes
+        result[0] =  ((uint32_t)rawBytes[0] << 10) |
+                     ((uint32_t)rawBytes[1] <<  2) |
+                    (((uint32_t)rawBytes[6] & 0xC0u) >> 6) ;
+        result[1] =  ((uint32_t)rawBytes[2] << 10) |
+                     ((uint32_t)rawBytes[3] <<  2) |
+                    (((uint32_t)rawBytes[6] & 0x30u) >> 4) ;
+        result[2] =  ((uint32_t)rawBytes[4] << 10) |
+                     ((uint32_t)rawBytes[5] <<  2) |
+                    (((uint32_t)rawBytes[6] & 0x0Cu) >> 2) ;
+    }
+
+    /// Make one measurement, then read XYZ results (returns 3 unsigned 18-bit quantities)
+	inline void MeasureOneTime(uint32_t (&result)[3])
 	{
-		#ifdef MMC5983MA_CONTINUOUS_MODE
-			#error Continuous mode not yet coded
-		#else
 			// ToDo MMC5983MA: assert not in continuous mode
 			// Initiate Magnetic Measurement
 			WriteControlAction(ControlRegister::Control_0, (uint8_t)Control_0_Mask::Action_TM_M);
@@ -332,19 +342,7 @@ class MMC5983MA_C {
 			uint8_t status;
 			get_reg(Register::Status,status);
 			assert(status & (uint8_t)StatusMask::Meas_M_Done);
-		#endif
-		// retrieve measurement results from raw register values
-		uint8_t rawBytes[7];
-		get_regs(Register::X_out_0, rawBytes, sizeof(rawBytes)); // 7 sequential field measurement bytes
-		result[0] = (uint32_t)( ((uint32_t)rawBytes[0] << 10) |
-				                ((uint32_t)rawBytes[1] <<  2) |
-							   (((uint32_t)rawBytes[6] & 0xC0u) >> 6)  );
-		result[1] = (uint32_t)( ((uint32_t)rawBytes[2] << 10) |
-				                ((uint32_t)rawBytes[3] <<  2) |
-							   (((uint32_t)rawBytes[6] & 0x30u) >> 4)  );
-		result[2] = (uint32_t)( ((uint32_t)rawBytes[4] << 10) |
-				                ((uint32_t)rawBytes[5] <<  2) |
-							   (((uint32_t)rawBytes[6] & 0x0Cu) >> 2)  );
+			Fetch_XYZ(result);
 	}
 };
 
@@ -358,7 +356,7 @@ int8_t MMC5983MA_C<TDEVICE>::Init()
 		WriteControlAction(ControlRegister::Control_1, (uint8_t)Control_1_Mask::Action_SW_RST);
 		memset(control_settings,0,sizeof(control_settings)); // set local copy of control registers to default
 		#ifdef PRINT_DETAILED_LOG
-			DiagPrintf("Wait >10mSec after reset\n");
+			dev.DiagPrintf("Wait >10mSec after reset\n");
 		#endif
 		dev.delay_us(20000); // Minimum 10msec required after reset
 		// Read and validate chip ID
@@ -389,10 +387,10 @@ int8_t MMC5983MA_C<TDEVICE>::get_regs(Register reg, uint8_t (&reg_data)[], uint3
 {
 	int8_t rslt = 0; // BMP5_OK;
 	dev.read((uint8_t)reg, reg_data, len);
-    #ifdef PRINT_DETAILED_LOG
+    #ifdef MMC5983MA_PRINT_DETAILED_LOG
         for(uint8_t idx=0; idx<len; idx++) {
             uint8_t regn = (uint8_t)reg+idx;
-			DiagPrintf("get_reg %02x %s => %02x\n", regn, RegisterName((Register)regn), reg_data[idx]);
+            dev.DiagPrintf("get_reg %02x %s => %02x\n", regn, RegisterName((Register)regn), reg_data[idx]);
         };
     #endif
 	if (!dev.IO_OK())
@@ -405,10 +403,10 @@ int8_t MMC5983MA_C<TDEVICE>::get_regs(Register reg, uint8_t (&reg_data)[], uint3
 template <typename TDEVICE>
 int8_t MMC5983MA_C<TDEVICE>::set_regs(Register reg, const uint8_t (&reg_data)[], uint32_t len)
 {
-    #ifdef PRINT_DETAILED_LOG
+    #ifdef MMC5983MA_PRINT_DETAILED_LOG
         for(uint8_t idx=0; idx<len; idx++) {
             uint8_t regn = (uint8_t)reg+idx;
-			DiagPrintf("set_reg %02x %s <= %02x\n", regn, RegisterName((Register)regn), reg_data[idx]);
+            dev.DiagPrintf("set_reg %02x %s <= %02x\n", regn, RegisterName((Register)regn), reg_data[idx]);
         };
     #endif
 	int8_t rslt = 0; // BMP5_OK;
@@ -421,25 +419,31 @@ int8_t MMC5983MA_C<TDEVICE>::set_regs(Register reg, const uint8_t (&reg_data)[],
 }
 
 template <typename TDEVICE>
-int8_t MMC5983MA_C<TDEVICE>::Measure_XYZ_Field_With_REVERSE_SET_and_SET()
+int8_t MMC5983MA_C<TDEVICE>::Measure_XYZ_With_Degauss()
 {
 	#ifndef MMC5983MA_CONTINUOUS_MODE // REVERSE_SET-SET don't make sense in continuous mode
-		uint32_t resultAfterSET[3] = {0}, resultAfterREVERSE_SET[3] = {0};
-		REVERSE_SET(); // now reading ::= -H + Offset
+		uint32_t resultAfterNormalDegauss[3] = {0}, resultAfterReverseDegauss[3] = {0};
+		DegaussPulse_Reverse(); // now reading ::= -H + Offset
 		const int delayUsec = 50000; // ToDo MMC5983MA: remove extra delays?
-		DiagPrintf("delay %d usecs\n", delayUsec); dev.delay_us(delayUsec);
-		MeasureAndReadRaw_XYZ(resultAfterREVERSE_SET);
-		SET(); // now reading ::= +H + Offset
-		DiagPrintf("delay %d usecs\n", delayUsec); dev.delay_us(delayUsec); // ToDo MMC5983MA: remove extra 100msec delay??
-		MeasureAndReadRaw_XYZ(resultAfterSET);
+		#ifdef MMC5983MA_PRINT_DETAILED_LOG
+			dev.DiagPrintf("delay %d usecs\n", delayUsec);
+		#endif
+		dev.delay_us(delayUsec);
+		MeasureOneTime(resultAfterReverseDegauss);
+		DegaussPulse_Normal(); // now reading ::= +H + Offset
+		#ifdef MMC5983MA_PRINT_DETAILED_LOG
+			dev.DiagPrintf("delay %d usecs\n", delayUsec);
+		#endif
+		dev.delay_us(delayUsec);
+		MeasureOneTime(resultAfterNormalDegauss);
 		// Compute offset (zero field value) and signed result for each sensor
 		for(int i=0; i<3; i++) {
-			offset[i] = (          resultAfterSET[i] +          resultAfterREVERSE_SET[i])/2;
-			field [i] = (( int32_t)resultAfterSET[i] - (int32_t)resultAfterREVERSE_SET[i])/2;
+			offset[i] = (         resultAfterNormalDegauss[i] +          resultAfterReverseDegauss[i])/2;
+			field [i] = ((int32_t)resultAfterNormalDegauss[i] - (int32_t)resultAfterReverseDegauss[i])/2;
 		}
 	#else
 		uint32_t result[3] = {0};
-		MeasureAndReadRaw_XYZ(result);
+		MeasureOneTime(result);
 		// Compute offset (zero field value) and signed result for each sensor
 		for(int i=0; i<3; i++) {
 			offset[i] = 0x20000; // nominal value

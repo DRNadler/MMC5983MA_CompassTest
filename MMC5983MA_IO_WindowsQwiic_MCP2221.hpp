@@ -35,7 +35,7 @@ class MMC5983MA_IO_WindowsQwiic_MCP2221_C : public MMC5983MA_IO_base_C {
 public:
     MCP2221& mcp2221; // IO device
     MMC5983MA_IO_WindowsQwiic_MCP2221_C(MCP2221& _mcp2221) : mcp2221(_mcp2221), MMC5983MA_IO_base_C(I2C) {}; // Warning: no communications initialization in ctor
-    // Replace the base class IO function suggestions with implementations in this derived class
+    // Implement the base class IO function suggestions in this derived class
     void read(uint8_t reg_addr, uint8_t(&read_data)[], uint32_t len);
     void write(uint8_t reg_addr, const uint8_t(&write_data)[], uint32_t len);
     void delay_us(uint32_t period);
@@ -43,7 +43,13 @@ public:
     int last_IO_status = 0;
     bool IO_OK(void) { return last_IO_status == 0; };
     // const uint8_t slave7bitAddress = 0x77; // kludge try DSP310
-    const static uint8_t slave7bitAddress = (0b0110000); // The MEMSIC device 7 - bit device WRITE address is[0110000] (left-shifted, then optional OR'd with read-bit 1)
+    const static uint8_t slave7bitAddress = (0b0110000); /// The MEMSIC device 7 - bit device WRITE address is[0110000] (left-shifted, then optional OR'd with read-bit 1)
+    /// Application must implement printf-analog if MMC5983MA_PRINT_DETAILED_LOG is defined in MMC5983MA_C
+    #ifdef __GNUG__
+        int DiagPrintf(const char* format, ...); __attribute__((format(printf, 2, 3)));
+    #else
+        int DiagPrintf(const char* format, ...); // __attribute__((format(printf, 2, 3)));
+    #endif
 };
 
 #endif // MMC5983MA_IO_WindowsQwiic_MCP2221_HPP_INCLUDED

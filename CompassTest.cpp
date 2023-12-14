@@ -5,8 +5,9 @@
 // Modified by:
 // Created:     17-November-2023
 // Copyright:   (c) 2023 Dave Nadler
-// Licence:     MIT licence
+// License:     MIT license
 /////////////////////////////////////////////////////////////////////////////
+
 /*
 MIT License
 
@@ -48,9 +49,8 @@ SOFTWARE.
 #include "wx/selstore.h"
 #include "wx/version.h"
 
-
+// Microchip MCP2221 USB-to-I2C adapter to drive Qwiic sensors
 #include "MCP2221.hpp"
-#include "mcp2221_dll_um.h"
 
 #include "MMC5983MA_IO_WindowsQwiic_MCP2221.hpp"
 #include "MMC5983MA.hpp"
@@ -109,7 +109,7 @@ MyFrame::~MyFrame()
 {
     m_timer_TakeCompassReading.Stop();
     delete wxLog::SetActiveTarget(m_logOld);
-    // ToDo: mcp2221.Close(); // should close DLL/FT232H connection, omission seems not to cause problems...
+    // ToDo: mcp2221.Close(); // should close DLL/FT232H connection? Omission seems not to cause problems...
     delete pCompass;
     delete pCompassIO;
 }
@@ -132,7 +132,7 @@ void MyFrame::StartStopClicked(wxCommandEvent&) {
         mcp2221.Init(); // locate and open an MCP2221 USB-to-Qwiic device
         wxLogMessage("%d MCP2221s found connected to this PC; first one opened OK.", mcp2221.connectedDevices);
         pCompassIO = new MMC5983MA_IO_WindowsQwiic_MCP2221_C(mcp2221);
-        pCompass = new MMC5983MA_C< MMC5983MA_IO_WindowsQwiic_MCP2221_C>(*pCompassIO);
+        pCompass = new MMC5983MA_C<MMC5983MA_IO_WindowsQwiic_MCP2221_C>(*pCompassIO);
         pCompass->Init(); // resets, verifies compass product ID over I2C bus, throws on failure
         assert(pCompass->initialized);
         wxLogMessage("Compass initialized AOK");
@@ -148,7 +148,7 @@ void MyFrame::StartStopClicked(wxCommandEvent&) {
 void MyFrame::Make_A_Measurement() {
     const double nominalFieldmG = 512.63; // ~ strength of Earth's field at Dave's desk; see below.
     wxLogMessage("Measure_XYZ_Field_WithResetSet...");
-    pCompass->Measure_XYZ_Field_With_REVERSE_SET_and_SET();
+    pCompass->Measure_XYZ_With_Degauss();
     wxLogMessage("-----------");
     wxLogMessage("Compass: SET/RESET offsets (zero-point, nominal 0x20000): x%05lx, x%05lx, x%05lx", pCompass->offset[0], pCompass->offset[1], pCompass->offset[2]);
     wxLogMessage("Compass: sensors (adjusted for offset): x%05lx, x%05lx, x%05lx", pCompass->field[0], pCompass->field[1], pCompass->field[2]);
@@ -174,7 +174,7 @@ void MyFrame::Make_A_Measurement() {
     report_offset.Replace("%", "%%"); // so wxLog doesn't expand percentage as a printf-style format specifier
     wxLogMessage(report_offset);
     //
-    // Earth's magnetic field intensity is roughly between 25,000 - 65,000 nT (.25 - .65 gauss). That's 250-650 mG.
+    // Earth's magnetic field intensity is roughly between 25,000 - 65,000 nT. That's 250-650 mG.
     /*
      * From WMM, for 42N,71W,0MSL (100nT = 1mG)
      *      Total   Horizontal       North       East     Vertical  Declination  Inclination
@@ -220,23 +220,23 @@ void MyFrame::Make_A_Measurement() {
 // ----------------------------------------------------------------------------
 // Diagnostic output for MMC5983MA_C_local (MMC5983MA_C register IO trace)
 // ----------------------------------------------------------------------------
-int MMC5983MA_C_local::DiagPrintf(const char* format, ...) {
+int MMC5983MA_IO_WindowsQwiic_MCP2221_C::DiagPrintf(const char* format, ...) {
     va_list args;
     va_start(args, format);
-    #if 0
-        // PrintfV returns a too-long length wxString with junk after correct string except missing trailing newline.
-        // Confused about character encoding in use; deranged by newline character in format string?
-        wxString logText;
-        int r = logText.PrintfV(format, args);
-        logText.Replace("\n", ""); // avoid extra blank lines in log window
-        wxLogMessage(logText);
-    #else
-        char tmp[200];
-        int r = vsprintf(tmp, format, args);
-        wxString tmp2(tmp);
-        tmp2.Replace("\n", ""); // avoid extra blank lines in log window
-        wxLogMessage(tmp2);
-    #endif
+#if 0
+    // PrintfV returns a too-long length wxString with junk after correct string except missing trailing newline.
+    // Confused about character encoding in use; deranged by newline character in format string?
+    wxString logText;
+    int r = logText.PrintfV(format, args);
+    logText.Replace("\n", ""); // avoid extra blank lines in log window
+    wxLogMessage(logText);
+#else
+    char tmp[200];
+    int r = vsprintf(tmp, format, args);
+    wxString tmp2(tmp);
+    tmp2.Replace("\n", ""); // avoid extra blank lines in log window
+    wxLogMessage(tmp2);
+#endif
     va_end(args);
     return r;
 };
