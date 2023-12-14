@@ -31,7 +31,7 @@ SOFTWARE.
 // ToDo MMC5983MA: Implement continuous mode? Currently 4ms delay per measurement.
 // ToDo MMC5983MA: Complete MMC5983MA_CONTINUOUS_MODE - no readings as coded
 // #define MMC5983MA_CONTINUOUS_MODE // default as coded is one-shot
-#define MMC5983MA_PRINT_DETAILED_LOG
+// #define MMC5983MA_PRINT_DETAILED_LOG
 
 /*
 Datasheet Questions (MEMSIC MMC5983MA Rev A -- Formal release date: 4/3/2019)
