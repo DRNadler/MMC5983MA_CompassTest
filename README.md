@@ -10,8 +10,9 @@ The [MEMSIC MMC5983-B Prototyping Board](https://www.mouser.com/ProductDetail/ME
 
 To make a reading, I use the degauss procedure to find the mid-point
 (the zero-field output value, inapproriately called 'offset' in MEMSIC datasheet).
-Reminder: The degauss procedure uses a SET/RESET function which gives a big pulse and resets the device,
-clearing any residual and setting the measurement polarity (these functions really should be called DEGAUSS_REVERSE_POLARITY and DEGAUSS_FORWARD_POLARITY). 
+Reminder: The film magnetization procedure uses a SET/RESET function which gives a big pulse and resets the device,
+clearing any residual magnetization and setting the measurement polarity
+(these functions might better be called MAGNETIZE_REVERSE_POLARITY and MAGNETIZE_FORWARD_POLARITY). 
 Per the datasheet, I'm making a RESET, measuring, a SET, measuring.
 Then calculate the center-value (nominal zero-field output which MEMSIC inappropriately calls _offset_) and measurement given two readings with opposite polarity.
 All per the instructions in the datasheet.
