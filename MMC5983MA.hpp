@@ -27,10 +27,18 @@ SOFTWARE.
 
 // ToDo MMC5983MA: Reliable compass reading...
 // ToDo MMC5983MA: Fix haphazard return values from API, maybe factor out measurement result class.
+// ToDo MMC5983MA: Incorporate info from Robert.Drees@gmx.net
+
+/* Notes
+Chip power-on reset does a 'SET' so chip always comes up with normal polarization.
+
+*/
 
 // ToDo MMC5983MA: Implement continuous mode? Currently 4ms delay per measurement.
 // ToDo MMC5983MA: Complete MMC5983MA_CONTINUOUS_MODE - no readings as coded
 // #define MMC5983MA_CONTINUOUS_MODE // default as coded is one-shot
+
+// Register-IO trace is enabled with the following #define:
 // #define MMC5983MA_PRINT_DETAILED_LOG
 
 /*
@@ -108,7 +116,7 @@ class MMC5983MA_C {
 		Y_out_1	   = 0x03, // Yout [9:2]		   read-only
 		Z_out_0	   = 0x04, // Zout [17:10]		   read-only
 		Z_out_1	   = 0x05, // Zout [9:2]		   read-only
-		XYZ_out_2  = 0x06, // Xout[1:0],Yout[1:0],Zout[1:0] (for 18-bit mode) read-only
+		XYZ_out_2  = 0x06, // Xout[1:0],Yout[1:0],Zout[1:0] (for 18-bit values) read-only
 		T_out	   = 0x07, // Temperature output   read-only
 		Status	   = 0x08, // Device status		   read-write (write to reset interrupt flags)
 		// To prevent accidents, control registers are in separate type below
@@ -148,11 +156,11 @@ class MMC5983MA_C {
 	enum class StatusMask : uint8_t {
 		OTP_read_done = 0x10, ///< The chip successfully read its OTP memory; should always be set.
 		Meas_T_Done	  = 0x02, ///< A temperature measurement completed.
-							  ///< After a new measurement command, turns to 0.
+							  ///< A new measurement command resets to 0.
 							  ///< When measurement is finished, remains 1 till next measurement.
 							  ///< Writing 1 into this bit will clear the corresponding interrupt.
 		Meas_M_Done	  = 0x01, ///< A magnetic measurement completed (check before reading output).
-							  ///< After a new measurement command, turns to 0.
+							  ///< A new measurement command resets to 0.
 							  ///< When measurement is finished, remains 1 till next measurement.
 							  ///< Writing 1 into this bit will clear the corresponding interrupt.
 	};
@@ -252,7 +260,7 @@ class MMC5983MA_C {
 		// Return local copy of the control register to access settings
 		return control_settings[controlRegIdx];
 	}
-	/// Update a setting (or settings if or'd together) in one control register
+	/// Update a setting (or settings if OR'd together) in one control register
 	void WriteControlSetting(ControlRegister controlReg, uint8_t settingMask, uint8_t settingValue) {
 		// Update in-memory copy of the control register settings per arguments
 		uint8_t &setting = GetSettingRef(controlReg);
