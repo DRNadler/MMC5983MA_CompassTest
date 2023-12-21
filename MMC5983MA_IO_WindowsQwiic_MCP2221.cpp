@@ -60,7 +60,7 @@ void  MMC5983MA_IO_WindowsQwiic_MCP2221_C::read(uint8_t registerAddress, uint8_t
     // 4,5) write start-bit/slave address, then register address (should wait for ACK)
     int ret1 = mcp2221.Mcp2221_I2cWrite(1, slave7bitAddress, true, &registerAddress);
     assert(ret1 == 0);
-    // 6,7) another start bit ,sensor address with 'read' bit set, then start reading
+    // 6,7) another start bit, sensor address with 'read' bit set, then start reading
     int ret2 = mcp2221.Mcp2221_I2cRead(len, slave7bitAddress, true, read_data);
     assert(ret2 == 0);
 }

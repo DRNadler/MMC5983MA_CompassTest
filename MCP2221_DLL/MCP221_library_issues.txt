@@ -1,3 +1,11 @@
+drn@DAVE2021 MINGW64 /d/SN10C/MMC5983MA_CompassTest/MCP2221_DLL/dll (main)
+$ file mcp2221_dll_um_x86.dll
+mcp2221_dll_um_x86.dll: PE32 executable (DLL) (GUI) Intel 80386, for MS Windows, 5 sections
+$ file mcp2221_dll_um_x64.dll
+mcp2221_dll_um_x64.dll: PE32+ executable (DLL) (GUI) x86-64, for MS Windows, 6 sections
+
+Version numbers are blank in DLLs, and no version labels are evident.
+
 Three are several different ZIPs on the Microchip site.
 They seem to correspond to different versions of Visual Studio.
 
@@ -6,7 +14,3 @@ It includes:
 - a LIB version (all driver interface code is within the LIB)
 - a DLL version (the LIB contains only the thunks to invoke the DLL)
 These appear to be release builds only.
-
-The ONLY build success (in early 2021 tests) was with:
-- Release, x86
-- DLL version from Microchip
