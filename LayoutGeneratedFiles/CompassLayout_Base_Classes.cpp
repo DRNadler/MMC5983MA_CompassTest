@@ -44,6 +44,9 @@ MyFrame_Base::MyFrame_Base( wxWindow* parent, wxWindowID id, const wxString& tit
 	m_CompassOffsets_staticText->Wrap( -1 );
 	ResultSummary_bSizer->Add( m_CompassOffsets_staticText, 0, 0, 5 );
 
+	m_staticline1 = new wxStaticLine( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLI_HORIZONTAL );
+	ResultSummary_bSizer->Add( m_staticline1, 0, wxEXPAND | wxALL, 5 );
+
 	m_CompassMinMax_staticText = new wxStaticText( this, wxID_ANY, wxT("Min/Max XYZ values in mG"), wxDefaultPosition, wxDefaultSize, wxALIGN_LEFT );
 	m_CompassMinMax_staticText->Wrap( -1 );
 	ResultSummary_bSizer->Add( m_CompassMinMax_staticText, 0, 0, 5 );

@@ -19,6 +19,7 @@
 #include <wx/colour.h>
 #include <wx/settings.h>
 #include <wx/stattext.h>
+#include <wx/statline.h>
 #include <wx/sizer.h>
 #include <wx/textctrl.h>
 #include <wx/menu.h>
@@ -39,6 +40,7 @@ class MyFrame_Base : public wxFrame
 		wxStaticText* m_CompassResult_staticText;
 		wxStaticText* m_CompassDetail_staticText;
 		wxStaticText* m_CompassOffsets_staticText;
+		wxStaticLine* m_staticline1;
 		wxStaticText* m_CompassMinMax_staticText;
 		wxStaticText* m_ObservedCompassOffsets_staticText;
 		wxTextCtrl* m_textCtrl_For_Logging;

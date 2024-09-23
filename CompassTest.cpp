@@ -208,7 +208,7 @@ void MyFrame::Make_A_Measurement() {
     wxLogMessage(report_MinMax);
     //
     wxString report_AvgMinMax;
-    report_AvgMinMax.Printf("XYZ averageMinMax (observed additional offset): %6.2f, %6.2f, %6.2f", avgReadings_mG[0], avgReadings_mG[1], avgReadings_mG[2]);
+    report_AvgMinMax.Printf("XYZ averageMinMax mG (observed additional offset): %6.2f, %6.2f, %6.2f", avgReadings_mG[0], avgReadings_mG[1], avgReadings_mG[2]);
     m_ObservedCompassOffsets_staticText->SetLabel(report_AvgMinMax);
     wxLogMessage(report_AvgMinMax);
     //
