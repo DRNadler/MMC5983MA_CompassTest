@@ -2,11 +2,13 @@
 For reference see [Memsic MMC5983MA Compass Datasheet Rev A, Formal release date: 4/3/2019](https://www.memsic.com/Public/Uploads/uploadfile/files/20220119/MMC5983MADatasheetRevA.pdf) </br>
 Also [Nine! videos about this part by Robert](https://www.youtube.com/@robertssmorgasbord/videos). 
 
-With the [SparkFun Qwiic MMC5983MA board](https://www.sparkfun.com/products/19921)
-I get poor results; field magnitude measurement problems highlight big offsets in each axis.
-</br>
 The [MEMSIC MMC5983-B Prototyping Board](https://www.mouser.com/ProductDetail/MEMSIC/MMC5983-B?qs=B6kkDfuK7%2FDLJ5Gi%252B91PGg%3D%3D&mgh=1&gad_source=1) gets good results.
-</br> Either a problem with the SparkFun board or I'm doing something wrong...
+</br>
+The [SparkFun Qwiic MMC5983MA board](https://www.sparkfun.com/products/19921)
+yields poor results; field magnitude measurement problems highlight big offsets in each axis.
+Likely caused by overheating during Sparkfun's soldering;
+this part requires special low-temperature soldering.
+</br>
 
 To make a reading, I use the degauss procedure to find the mid-point
 (the zero-field output value, inapproriately called 'offset' in MEMSIC datasheet).
@@ -21,7 +23,7 @@ Rotating the sensor at a spot in 3D, the measured field magnitude should be cons
 I rotate the sensor at a fixed point to find the minimum and maximum sensor output for each axis,
 which should be identical magnitude if the degauss procedure works and the mid-point is found correctly.
 
-My test program (this GItHub repository) is a C++ 32-bit Windows program using wxWidgets,
+My test program (this GitHub repository) is a C++ Windows program using wxWidgets,
 communicating with the Qwiic MMC5983A boards using an Adafruit MCP2221 USB-to-Qwiic adapter.
 Included is the MMC5983A C++ device driver I wrote (not yet complete).
 
@@ -32,9 +34,13 @@ and the min/max for all axis have consistent magnitude (though the Z axis has sl
 ![offset image](./MinMax_XYZ_search_WORKING.PNG)
 
 # SparkFun Qwiic MMC5983MA 19921 Problems
-Either I'm doing something wrong (hardly ever happens), or the SparkFun MMC5983MA is not working properly!</br>
-I'd be delighted if anyone can report success with the SparkFun MMC5983MA and show me where I've made a mistake!</br>
-The SparkFun compass seems to fail a basic sanity test (constant field magnitude reading).
+<br>Update: The SparkFun MMC5983MA is not working properly!
+The SparkFun compass fails a basic sanity test (constant field magnitude reading).
+The problems detailed here are consistent with a damaged MMC5983MA,
+caused by exceeding the allowed heating of the sensor during soldering.
+Unfortunately I've had first-hand experience with this overheating problem
+during production of our own boards.
+</br>
 
 Rotating the MMC5983MA at a fixed point in space, it's measuring different field magnitudes;
 the magnitude should be constant.  Note magnitude is sqrt(X^2+Y^2+Z^2), and reported values range from 
@@ -59,7 +65,7 @@ Unfortunately, I've had great difficulty getting sensible answers from MEMSIC te
    - b) In continuous mode, is Meas_M_Done ever set?
    - c) Are TM_M and Meas_M_Done only for one-shot measurements?
    - d) Does temperature measurement require continuous pressure mode to be turned off?</br>
-      **MEMSIC: Temperature sensor does not really work, don't use it.**
+      **From MEMSIC: Temperature sensor does not really work, don't use it.**
 2) Can SET and RESET used while continuous mode is enabled?
 3) The use and behavior of auto-SET-RESET is not documented:
    - a) What is the PURPOSE of auto-SET-RESET?</br>
@@ -82,6 +88,6 @@ Unfortunately, I've had great difficulty getting sensible answers from MEMSIC te
    Given BW and CM settings, What *exactly* is the sampling and filter?
 7) OTP read controls are discussed, but OTP is never defined.
    What is it? Why do we care? </br>
-   **MEMSIC: OTP indicates MMC5983MA's one-time programming information was
+   **From MEMSIC: OTP indicates MMC5983MA's one-time programming information was
    read successfully by firmware after the last reset. This bit should always be set.
    It should never be necessary to command the device to re-read OTP.**
