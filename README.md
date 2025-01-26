@@ -1,6 +1,6 @@
 # MMC5983MA Compass Test - Quick-And-Dirty test
 For reference see [Memsic MMC5983MA Compass Datasheet Rev A, Formal release date: 4/3/2019](https://www.memsic.com/Public/Uploads/uploadfile/files/20220119/MMC5983MADatasheetRevA.pdf) </br>
-Also [Nine! videos about this part by Robert](https://www.youtube.com/@robertssmorgasbord/videos). 
+Also [Ten! videos about this part by Robert](https://www.youtube.com/@robertssmorgasbord/search?query=mmc). 
 
 The [MEMSIC MMC5983-B Prototyping Board](https://www.mouser.com/ProductDetail/MEMSIC/MMC5983-B?qs=B6kkDfuK7%2FDLJ5Gi%252B91PGg%3D%3D&mgh=1&gad_source=1) gets good results.
 </br>
