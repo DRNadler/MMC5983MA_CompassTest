@@ -1,10 +1,12 @@
 /// MMC5983MA.hpp - MMC5983MA_C class - driver for MEMSIC MMC5983MA 3-axis magnetometer.
-// DRNadler 21-December-2023
+
+#ifndef MMC5983A_HPP_INCLUDED
+#define MMC5983A_HPP_INCLUDED
 
 /*
 MIT License
 
-Copyright (c) 2023 Dave Nadler
+Copyright (c) 2023-2025 Dave Nadler
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -25,60 +27,82 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-// ToDo MMC5983MA: Reliable compass reading...
 // ToDo MMC5983MA: Fix haphazard return values from API, maybe factor out measurement result class.
-// ToDo MMC5983MA: Incorporate info from Robert.Drees@gmx.net
-
-/* Notes
-Chip power-on reset does a 'SET' so chip always comes up with normal polarization.
-*/
-
-// ToDo MMC5983MA: Implement continuous mode? Currently 4ms delay per measurement.
-// ToDo MMC5983MA: Complete MMC5983MA_CONTINUOUS_MODE - no readings as coded
+// ToDo MMC5983MA: Implement continuous mode? Currently 8ms delay per measurement (17ms using AutoSR).
 // #define MMC5983MA_CONTINUOUS_MODE // default as coded is one-shot
 
 // Register-IO trace is enabled with the following #define:
 // #define MMC5983MA_PRINT_DETAILED_LOG
 
+// See Ten(!) YouTube videos about this part by Robert.Drees@gmx.net here:
+// https://www.youtube.com/@robertssmorgasbord/search?query=mmc
+
+
 /*
 Datasheet Questions (MEMSIC MMC5983MA Rev A -- Formal release date: 4/3/2019)
-The datasheet is seriously unclear on many points,
-and sometimes conflicts with MEMSIC's sample code...
+Above is the latest release on MEMSIC.com as of 11-Jan-2025.
+The datasheet is seriously unclear on many points...
+The following questions are still outstanding with MEMSIC:
 
 1) Continuous mode vs. one-shot mode aren't well documented.
    a) Is it necessary to write TM_M to start measurements in continuous mode?
    b) In continuous mode, is Meas_M_Done ever set?
-   c) Are TM_M and Meas_M_Done only for one-shot measurements?
-   d) Does temperature measurement require continuous pressure mode to be turned off?
+   c) Are TM_M and Meas_T_Done only for one-shot measurements?
+   d) Can MMC5983MA measure temperature in continuous mode?
       ANSWERED SORT-OF: Temperature sensor does not really work, don't use it.
+
 2) Can SET and RESET used while continuous mode is enabled?
-3) The use and behavior of auto-SET-RESET is not documented:
+
+3) The use and behavior of auto-SET-RESET (AutoSR) is NOT DOCUMENTED:
    a) What is the PURPOSE of auto-SET-RESET?
-      Unless a large field saturates the sensor, why is this helpful?
-      How can this improve performance?
-   b) The Auto_SR_en bit is labeled "Automatic Set-Reset".
-      What exactly does the sensor do if this bit is set?
-      Does it operate in both continuous and one-shot mode?
-   c) The sample code provided by MEMSIC says "continuous mode with auto set and reset" - is that correct?
+      Not what does it do! What problem does this solve?
+   b) What exactly does MMC5983MA do if Auto_SR_en bit is set?
+   c) Does Auto_SR_en work in both continuous and one-shot mode?
+   d) What is the 0-field output value when using AutoSR?
+   e) How long do AutoSR measurements take?
+
+   f) MEMSIC sample code says "continuous mode with auto set and reset" - is that correct?
       The datasheet page 16 says "The device will perform a SET automatically...";
       should that be "performs a periodic RESET/SET sequence"?
       Which is the correct explanation of what the chip does?
       The order of SET and RESET determines the sensing polarity, so this needs to be clear, right?
-4) Explain saturation detection - what are the steps?
-   What is the additional applied saturation test field in Gauss when a saturation-enable bit is set?
-   Is it necessary to set the enable bits back to 0, or do they reset automatically like SET/RESET?
-5) The datasheet says SET and RESET operations take 500 nsec.
-   MEMSIC sample code waits 500 usec. Which is correct?
+
 6) The decimation filter is mentioned but not described.
    Given BW and CM settings, What *exactly* is the sampling and filter?
-7) OTP read controls are discussed, but OTP is never defined.
-   What is it? Why do we care? ANSWERED: OTP indicates one-time programming
-   read successfully by firmware after reset. This bit should always be set.
 
 */
 
-#ifndef MMC5983A_HPP_INCLUDED
-#define MMC5983A_HPP_INCLUDED
+/*
+======================  Things MISSING from MEMSIC datasheet  ======================
+
+Measurement offsets vary greatly with temperature, so a SET/RESET sequence
+to remove the offset is a good idea (either explicit or using Auto-Set-Reset).
+AutoSR is undocumented in the datasheet but recommended by MEMSIC tech support.
+AutoSR internally does a sequence as follows:
+   SET, Sample1, RESET, Sample2, Output=0x20000+(Sample1-Sample2)/2.
+The observed delay until results are available is twice the datasheet-specified
+measurement time plus an additional 1msec for SET and RESET.
+AutoSR is available for commanded measurements or in continuous mode.
+
+RESET/SET procedure:
+- SET/RESET does not reverse polarity of YZ (only X works) when using SPI: bug in MMC5983MA!
+  See: https://electronics.stackexchange.com/questions/736609/magnetometer-memsic-mmc5983ma-set-reset-only-works-on-x-channel-when-using-spi
+- Any rotation between the two measurements (between SET and RESET measurements) creates an error!
+  Sensor must be relatively still.
+- Code must wait 500uSec after RESET or SET before making a reading (AutoSR waits internally)
+
+Saturation Detection:
+  An internal coil can add or subtract from the ambient field (enabled via [ST_ENP]/[ST_ENM] bits).
+  If the sensor is saturated (field > ~8G), one of adding or subtracting this additional field will always cause no output change.
+  The amount added/subtract varies by axis (measured by Robert):
+     X-Axis: +/-1000mG
+     Y-Axis: +/- 300mG
+     Z-Axis: +/- 200mG
+
+Chip power-on or reset does a 'SET', so chip always comes up with normal polarization.
+
+
+*/
 
 
 #include <stdint.h>
@@ -86,38 +110,34 @@ and sometimes conflicts with MEMSIC's sample code...
 #include <assert.h>
 #include <memory.h> // memcpy
 
-/// Driver for MMC5983MA 3-axis magnetometer sensor
+/// Driver for MMC5983MA 3-axis magnetometer sensor <BR>
 /// See MMC5983MA_IO.hpp for example TDEVICE class (provides platform-specific IO)
 template <typename TDEVICE>
 class MMC5983MA_C {
     // ==============================  Definitions  ==============================
   public:
     /// Bandwidth selection adjusts the length of the decimation filter,
-    /// and controls the measurement duration. Note: X/Y/Z channel
-    /// measurements are taken in parallel.
-    enum class Bandwidth_T : uint8_t {
-        Bandwidth_00_100Hz = 0x00, // 8msec
+    /// and controls the measurement duration.
+    /// Note: X/Y/Z channel measurements are taken in parallel.
+    enum class Bandwidth_T : uint8_t { // These delays assume auto-SR is not in use
+        Bandwidth_00_100Hz = 0x00, // 8msec - default
         Bandwidth_01_200Hz = 0x01, // 4msec
         Bandwidth_10_400Hz = 0x02, // 2msec
         Bandwidth_11_800Hz = 0x03, // .5msec
     };
-    /// Given a bandwidth setting, how much time does a measurement take?
-    static int uSecPerMeasurement(Bandwidth_T bw) {
-        static const int usec[4] = { 8000, 4000, 2000, 500 };
-        return usec[(int)bw];
-    };
 
   protected:
+    // Register addresses within MMC5983MA
     enum class Register : uint8_t {
-        X_out_0    = 0x00, // Xout [17:10]         read-only
-        X_out_1    = 0x01, // Xout [9:2]           read-only
-        Y_out_0    = 0x02, // Yout [17:10]         read-only
-        Y_out_1    = 0x03, // Yout [9:2]           read-only
-        Z_out_0    = 0x04, // Zout [17:10]         read-only
-        Z_out_1    = 0x05, // Zout [9:2]           read-only
-        XYZ_out_2  = 0x06, // Xout[1:0],Yout[1:0],Zout[1:0] (for 18-bit mode) read-only
-        T_out      = 0x07, // Temperature output   read-only
-        Status     = 0x08, // Device status        read-write (write to reset interrupt flags)
+        X_out_0    = 0x00, ///< Xout [17:10]         read-only
+        X_out_1    = 0x01, ///< Xout [9:2]           read-only
+        Y_out_0    = 0x02, ///< Yout [17:10]         read-only
+        Y_out_1    = 0x03, ///< Yout [9:2]           read-only
+        Z_out_0    = 0x04, ///< Zout [17:10]         read-only
+        Z_out_1    = 0x05, ///< Zout [9:2]           read-only
+        XYZ_out_2  = 0x06, ///< Xout[1:0],Yout[1:0],Zout[1:0] (for 18-bit mode) read-only
+        T_out      = 0x07, ///< Temperature output   read-only
+        Status     = 0x08, ///< Device status        read-write (write to reset interrupt flags)
         // To prevent accidents, control registers are in separate type below
         //Control_0  = 0x09, // Control register 0   write-only
         //Control_1  = 0x0a, // Control register 1   write-only
@@ -153,45 +173,50 @@ class MMC5983MA_C {
         return "Invalid Register";
     };
     enum class StatusMask : uint8_t {
-        OTP_read_done = 0x10, ///< The chip successfully read its OTP memory; should always be set.
-        Meas_T_Done   = 0x02, ///< A temperature measurement completed.
-                              ///< A new measurement command resets to 0.
-                              ///< Set 1 when measurement is finished, and remains 1 till next measurement.
-                              ///< Writing 1 into this bit will clear the corresponding interrupt.
         Meas_M_Done   = 0x01, ///< A magnetic measurement completed (check before reading output).
                               ///< A new measurement command resets to 0.
                               ///< Set 1 when measurement is finished, and remains 1 till next measurement.
                               ///< Writing 1 into this bit will clear the corresponding interrupt.
+        Meas_T_Done   = 0x02, ///< A temperature measurement completed.
+                              ///< A new measurement command resets to 0.
+                              ///< Set 1 when measurement is finished, and remains 1 till next measurement.
+                              ///< Writing 1 into this bit will clear the corresponding interrupt.
+        OTP_read_done = 0x10, ///< The chip successfully read its OTP memory; should always be set.
     };
     enum class Control_0_Mask : uint8_t {
         Action_TM_M = 0x01, ///< Take magnetic field measurement (set 1 to initiate measurement).
-                            ///< Automatically reset to 0 when the measurement is complete.
+                            ///< Automatically reset to 0 when the measurement is complete (but this register is write-only).
         Action_TM_T = 0x02, ///< Take Temperature measurement (set 1 to initiate measurement).
-                            ///< Automatically reset to 0 when the measurement is complete.
+                            ///< Automatically reset to 0 when the measurement is complete (but this register is write-only).
                             ///< This bit and TM_M cannot be high at the same time.
         Setting_Enable_MeasurementDoneINT = 0x04, ///< Set 1 to enable the completed measurement interrupt.
                             ///< When a magnetic or temperature measurement finishes, an
                             ///< interrupt will be signaled.
         Action_SET = 0x08,  ///< Writing 1 starts the SET operation, which sends a large current
                             ///< through the sensor coils for 500ns.
-                            ///< Automatically reset to 0 at the end of the SET operation.
+                            ///< Automatically reset to 0 at the end of the SET operation (but this register is write-only).
         Action_REVERSE_SET = 0x10,///< Writing 1 starts the REVERSE_SET operation (MEMSIC calls this RESET),
                             ///< which sends a large reverse current (in the opposite direction of SET)
                             ///< through the sensor coils for 500ns.
-                            ///< Automatically reset to 0 at the end of the REVERSE_SET operation.
-        Setting_Auto_SR_en = 0x20,///< Set 1 to enable automatic SET/REVERSE_SET.
+                            ///< Automatically reset to 0 at the end of the REVERSE_SET operation (but this register is write-only).
+        Setting_Auto_SR_en = 0x20,///< Set 1 to enable automatic SET/REVERSE_SET.                   <BR>
+                            ///< Function/Purpose not documented in datasheet; does:                <BR>
+                            ///<   SET, Sample1, RESET, Sample2, Output=0x2000+(Sample1-Sample2)/2. <BR>
+                            ///< Works in either:
+                            ///< - commanded measurement mode, or
+                            ///< - continuous mode/Setting_ContinuousModeEnable and periodic set/Setting_AutoSETenable
         Action_OTP_Read = 0x40,///< Writing 1 commands the device to read the OTP data again.
-                            ///< Automatically reset to 0 after the shadow registers for OTP are refreshed.
-                            ///< MEMSIC support: Should never be required.
+                            ///< Automatically reset to 0 after the shadow registers for OTP are refreshed (but this register is write-only).
+                            ///< MEMSIC support: Should NEVER be required.
     };
     const static uint8_t Product_ID_Assigned = 0x30; // MMC5983MA product ID value
     enum class Control_1_Mask : uint8_t {
         Setting_Bandwidth = 0x03, ///< see Bandwidth_T enum below
-        Setting_X_inhibit = 0x04, ///< Writing 1 will disable X channel.
-        Setting_YZ_inhibit= 0x18, ///< Writing 1 to the two bits will disable Y and Z channel.
+        Setting_X_inhibit = 0x04, ///< Writing 1 disables X channel.
+        Setting_YZ_inhibit= 0x18, ///< Writing 1 to BOTH bits disables Y and Z channels (individual disable not supported).
         Action_SW_RST     = 0x80, ///< Writing 1 commands the part to reset, similar to power-up.
-                                  ///< Clears all registers and also rereads OTP
-                                  ///< Power/reset on time is 10mS.
+                                  ///< Clears all registers and also rereads OTP.
+                                  ///< PowerOn/reset time is 10mS.
     };
     enum class Control_2_Mask : uint8_t {
         Setting_ContinuousModeRate = 0x07,  ///< 0 is Off. See table in datasheet for nominal values.
@@ -200,14 +225,14 @@ class MMC5983MA_C {
         Setting_AutoSETenable = 0x80,  ///< 1 enables automatic periodic SET
     };
     enum class Control_3_Mask : uint8_t {
-        Action_SaturationTestEnablePlus = 0x02, // ToDo MMC5983MA: Is saturation function a setting or action?
-        Action_SaturationTestEnableMinus = 0x04,// "" "" ""
+        Setting_SaturationTestEnablePlus = 0x02, // Turn on supplemental coil + for saturation-detection
+        Setting_SaturationTestEnableMinus = 0x04,// Turn on supplemental coil - for saturation-detection
         Setting_SPI_3wire = 0x40,
     };
 
     // ==============================    Members    ==============================
   public:
-    MMC5983MA_C(TDEVICE &dev_) : initialized(false), dev(dev_) {};
+    MMC5983MA_C() : initialized(false) {};
 
     /// Initialize the sensor. Call this before using any other API.
     /// On success, sets 'initialized' member true.
@@ -220,17 +245,20 @@ class MMC5983MA_C {
     /// to compute offset. Place results in field and offset members.
     int8_t Measure_XYZ_Field_WithResetSet();
 
+    /// Read the magnetic field using poorly-documented Auto-Set-Reset feature.
+    int8_t Measure_XYZ_Field_WithAutoSR();
+
     int32_t field[3] = {0}; ///< Last magnetic field reading set (X,Y,Z), signed values already adjusted with offsets.
     const static int32_t CountsPerGauss = 16384; // 2^17 / 8G full-scale when using full 18-bit resolution as we do here.
 
     /// Each sensor's offset is the unsigned integer value the sensor will read
     /// with zero external field. Should be about mid-range for 18-bit value,
     /// ie 2^17 = 0x20000 = 131072.
-    uint32_t offset[3] = {0};  ///< Last measured offset (X,Y,Z) - always included in lastReading
+    uint32_t offset[3] = {0};  ///< Last measured offset (X,Y,Z) - always included in field above.
 
   protected:
 
-    TDEVICE &dev; ///< platform-specific hardware IO instance provided by user
+    TDEVICE dev; ///< platform-specific hardware IO instance
 
     typedef uint8_t uint8_array_t[]; ///< assist internal type conversions
     inline uint8_array_t &GetArrayRefFromSingle(uint8_t &s) {
@@ -250,19 +278,23 @@ class MMC5983MA_C {
     // b) Made the registers readable (action-only registers would not need reading).
     // Its like MEMSIC deliberately tried to make this part hard to support...
 
-    /// Saved control settings in all 4 control registers ("action" bits will never be set here)
-    uint8_t control_settings[4] = {0}; // Reset value of all control registers is 0
+    /// Saved control settings of all 4 control registers ("action" bits will never be set here)
+    uint8_t control_settings[4] = {0}; // Reset value of all 4 control registers is 0
     /// Get a reference to the control setting copy for the given control register
     uint8_t inline &GetSettingRef(ControlRegister controlReg) {
         int controlRegIdx = (int)controlReg - (int)ControlRegister::Control_0; // 0-3
         assert(controlRegIdx>=0 && (size_t)controlRegIdx<sizeof(control_settings));
-        // Return local copy of the control register to access settings
+        // Return reference to local copy of the control register to access settings
         return control_settings[controlRegIdx];
     }
-    /// Update a setting (or settings if OR'd together) in one control register
+    /// Update a setting (or settings if OR'd together) in one control register.
+    /// Only writes if the setting changed
     void WriteControlSetting(ControlRegister controlReg, uint8_t settingMask, uint8_t settingValue) {
+        uint8_t &setting = GetSettingRef(controlReg); // the control register's shadow...
+        // Is the setting already in place?
+        if( (setting&settingMask) == settingValue )
+            return; // nothing to do, already set as requested.
         // Update in-memory copy of the control register settings per arguments
-        uint8_t &setting = GetSettingRef(controlReg);
         setting &= ~settingMask; // mask out prior setting(s), and
         setting |= settingValue; // OR in new setting(s)
         // Write updated in-memory value to the sensor (any "Action" bits will be 0)
@@ -276,12 +308,23 @@ class MMC5983MA_C {
         set_reg((Register)controlReg, actionMask | setting);
     }
     void SetBandwidth(Bandwidth_T bw) {
-        WriteControlSetting(ControlRegister::Control_1, (uint8_t)Control_1_Mask::Setting_Bandwidth, (uint8_t)bw);
+        WriteControlSetting(ControlRegister::Control_1, (uint8_t)Control_1_Mask::Setting_Bandwidth, (uint8_t)bw); // bw is low-order 2 bits
     }
     Bandwidth_T GetBandwidth(void) const {
-        return (Bandwidth_T)(control_settings[1] & (int)Control_1_Mask::Setting_Bandwidth);
+        return (Bandwidth_T)(control_settings[1] & (int)Control_1_Mask::Setting_Bandwidth); // bw is low-order 2 bits
     };
-    int GetuSecPerMeasurement(void) const { return uSecPerMeasurement(GetBandwidth()); };
+    bool InAutoSRmode() const {
+        return (control_settings[0] & (uint8_t)Control_0_Mask::Setting_Auto_SR_en) != 0;
+    }
+    int uSecPerMeasurement(void) const {
+        // For current mode, how much time does a measurement take?
+        static const int usecGivenBandwidth[4] = { 8000, 4000, 2000, 500 }; // times for a single measurement
+        int usec = usecGivenBandwidth[(int)GetBandwidth()];
+        if(InAutoSRmode()) {
+            usec = usec*2 +1; // AutoSR mode makes two measurements, and needs additional 1msec for SET-RESET
+        }
+        return usec;
+    };
 
     /// Set Continuous mode (0 off, 1-7 per datasheet)
     void SetContinuousMode(uint8_t cm) {
@@ -290,10 +333,12 @@ class MMC5983MA_C {
         WriteControlSetting(ControlRegister::Control_2,
             (uint8_t)Control_2_Mask::Setting_ContinuousModeEnable | (uint8_t)Control_2_Mask::Setting_ContinuousModeRate, cm);
     }
+    bool InContinuousMode() const {
+        return (control_settings[2] & (uint8_t)Control_2_Mask::Setting_ContinuousModeEnable)!=0;
+    }
 
     /// Read one or more sequential registers
     int8_t get_regs(Register reg, uint8_t (&data)[], uint32_t len);
-
     /// Write one or more sequential registers
     int8_t set_regs(Register reg, const uint8_t (&data)[], uint32_t len);
 
@@ -301,25 +346,36 @@ class MMC5983MA_C {
     inline int8_t get_reg(Register reg, uint8_t &singleByte) {
         return get_regs(reg, GetArrayRefFromSingle(singleByte), 1);
     }
-
     /// Write a single register
     int8_t set_reg(Register reg, const uint8_t &singleByte) {
         return set_regs(reg, GetConstArrayRefFromSingle(singleByte), 1);
     }
 
+    /// RESET or SET generate a 500ns pulse to magnetize ANR film,
+    /// after which code must wait 500uSec before making a reading.
+    /// 500uSec delay from MEMSIC tech support and sample code (not in datasheet).
+    static const uint32_t RequiredWaitAfterMagnetizePulse_uSec = 500; // per MEMSIC
     /// Perform SET including required wait.
     inline void SET(void)
     {
-        // ToDo MMC5983MA: assert not in continuous mode for SET ???
+        assert(!InContinuousMode());
         WriteControlAction(ControlRegister::Control_0, (uint8_t)Control_0_Mask::Action_SET);
-        dev.delay_us(1); // 500ns required
+        dev.delay_us(RequiredWaitAfterMagnetizePulse_uSec);
     }
     /// Perform RESET including required wait.
     inline void RESET(void)
     {
-        // ToDo MMC5983MA: assert not in continuous mode for REVERSE_SET ???
+        assert(!InContinuousMode());
         WriteControlAction(ControlRegister::Control_0, (uint8_t)Control_0_Mask::Action_REVERSE_SET);
-        dev.delay_us(1); // 500ns required
+        dev.delay_us(RequiredWaitAfterMagnetizePulse_uSec);
+    }
+
+    /// Is measurement complete?
+    inline bool MeasurementIsComplete() {
+        uint8_t status;
+        get_reg(Register::Status,status);
+        bool complete = (status & (uint8_t)StatusMask::Meas_M_Done) != 0;
+        return complete;
     }
 
     /// Fetch the XYZ results (3 raw unsigned 18-bit values)
@@ -341,20 +397,22 @@ class MMC5983MA_C {
     inline void MeasureOneTime(uint32_t (&result)[3])
     {
         #ifndef MMC5983MA_CONTINUOUS_MODE
-            // ToDo MMC5983MA: assert not in continuous mode
+            assert(!InContinuousMode());
             // Initiate Magnetic Measurement
             WriteControlAction(ControlRegister::Control_0, (uint8_t)Control_0_Mask::Action_TM_M);
             // Wait for measurement complete
-        int usec = GetuSecPerMeasurement(); // 8msec for 100Hz, rarely measurement not complete ! //+20000; // ToDo MMC5983MA: Why is single-shot delay inadequate?? +4000, 10x work...
-        for(int tries=0; tries<5; tries++) {
-            dev.delay_us(usec);
-            uint8_t status;
-            get_reg(Register::Status,status);
-            if(status & (uint8_t)StatusMask::Meas_M_Done) break; // measurement finished =>
-            usec = 1000; // wait another millisecond and try again...
-        }
+            int usec = uSecPerMeasurement(); // 8msec for 100Hz bandwidth, rarely measurement not complete !
+            int tries=0;
+            for(; tries<5; tries++) {
+                dev.delay_us(usec);
+                if(MeasurementIsComplete()) break; // measurement finished =>
+                usec = 1000; // wait another millisecond and try again...
+            }
+            assert(MeasurementIsComplete());
+        #else
+            #error MMC5983MA_CONTINUOUS_MODE not implemented in MeasureOneTime
         #endif // #ifndef MMC5983MA_CONTINUOUS_MODE
-            Fetch_XYZ(result);
+        Fetch_XYZ(result);
     }
 };
 
@@ -363,7 +421,9 @@ int8_t MMC5983MA_C<TDEVICE>::Init()
 {
     int8_t rslt;
     uint8_t chip_id_read;
+    initialized = false;
     do {
+        dev.Init(); // communication layer initialization
         // Get chip into known state (needed when not immediately following a power-cycle) - SW reset
         WriteControlAction(ControlRegister::Control_1, (uint8_t)Control_1_Mask::Action_SW_RST);
         memset(control_settings,0,sizeof(control_settings)); // set local copy of control registers to default
@@ -375,7 +435,7 @@ int8_t MMC5983MA_C<TDEVICE>::Init()
         rslt = get_reg(Register::Product_ID, chip_id_read);
         if (rslt != 0) break;
         if (chip_id_read != Product_ID_Assigned) return -1;
-        SetBandwidth(Bandwidth_T::Bandwidth_00_100Hz/* Bandwidth_01_200Hz*/);
+        SetBandwidth(Bandwidth_T::Bandwidth_00_100Hz);
         #ifdef MMC5983MA_CONTINUOUS_MODE
             // Example from MEMSIC uses Auto_SR, BW00, CM_FREQ_50HZ:
             SetBandwidth(Bandwidth_T::Bandwidth_00_100Hz);
@@ -385,7 +445,7 @@ int8_t MMC5983MA_C<TDEVICE>::Init()
             WriteControlSetting(ControlRegister::Control_2,
                 (uint8_t)Control_2_Mask::Setting_ContinuousModeRate | (uint8_t)Control_2_Mask::Setting_ContinuousModeEnable,
                 (uint8_t)0x04/*50Hz @ BW=00*/                       | (uint8_t)Control_2_Mask::Setting_ContinuousModeEnable);
-            // ToDo MMC5983MA: Not required for continuous mode? Initiate Magnetic Measurement
+            // ??? Not required for continuous mode? Initiate Magnetic Measurement
             WriteControlAction(ControlRegister::Control_0, (uint8_t)Control_0_Mask::Action_TM_M);
           #endif
         #endif
@@ -434,34 +494,49 @@ template <typename TDEVICE>
 int8_t MMC5983MA_C<TDEVICE>::Measure_XYZ_Field_WithResetSet()
 {
     #ifndef MMC5983MA_CONTINUOUS_MODE // RESET-SET don't make sense in continuous mode
+        // Make sure we're not in AutoSR mode before trying explicit SET-RESET
+        WriteControlSetting(ControlRegister::Control_0, (uint8_t)Control_0_Mask::Setting_Auto_SR_en, 0);
         uint32_t resultAfter_SET[3] = {0}, resultAfter_RESET[3] = {0};
-        RESET(); // includes post-pulse delay, now reading ::= -H + Offset
-        const int delayUsec = 500; // when reduced to 0, first read only gets junk (crazy offset value)
-        #ifdef MMC5983MA_PRINT__DETAILED_LOG
-            dev.DiagPrintf("delay %d usecs\n", delayUsec);
-        #endif
-        dev.delay_us(delayUsec);
+        RESET(); // includes required post-pulse delay (nominal 500us, implemented 1msec), now reading ::= -H + Offset
         MeasureOneTime(resultAfter_RESET);
-        SET(); // includes post-pulse delay, now reading ::= +H + Offset
-        #ifdef MMC5983MA_PRINT_DETAILED_LOG
-            dev.DiagPrintf("delay %d usecs\n", delayUsec);
-        #endif
-        dev.delay_us(delayUsec);
+        SET();   // includes required post-pulse delay (nominal 500us, implemented 1msec), now reading ::= +H + Offset
         MeasureOneTime(resultAfter_SET);
         // Compute offset (zero field value) and signed result for each sensor
-        for(int i=0; i<3; i++) {
-            offset[i] = (         resultAfter_SET[i] +          resultAfter_RESET[i])/2;
-            field [i] = ((int32_t)resultAfter_SET[i] - (int32_t)resultAfter_RESET[i])/2;
+        for(int chIdx=0; chIdx<3; chIdx++) {
+            if(chIdx>0 && dev.UsesSPI()) {
+                // Work-around MMC5983MA bug: With SPI interface, RESET only works on X channel
+                offset[chIdx] = 0x20000; // With this bug, best we can do is use nominal 0 value...
+                field [chIdx] = (int32_t)resultAfter_SET[chIdx] - 0x20000;
+            } else {
+                offset[chIdx] = (         resultAfter_SET[chIdx] +          resultAfter_RESET[chIdx])/2;
+                field [chIdx] = ((int32_t)resultAfter_SET[chIdx] - (int32_t)resultAfter_RESET[chIdx])/2;
+            }
         }
     #else
         uint32_t result[3] = {0};
         MeasureOneTime(result);
         // Compute offset (zero field value) and signed result for each sensor
         for(int i=0; i<3; i++) {
-            offset[i] = 0x20000; // nominal value
+            offset[i] = 0x20000; // nominal center value 2^17
             field [i] = (int32_t)result[i] - (int32_t)offset[i];
         }
     #endif
+    return 0;
+}
+
+template <typename TDEVICE>
+int8_t MMC5983MA_C<TDEVICE>::Measure_XYZ_Field_WithAutoSR()
+{
+    WriteControlSetting(ControlRegister::Control_0, (uint8_t)Control_0_Mask::Setting_Auto_SR_en, (uint8_t)Control_0_Mask::Setting_Auto_SR_en);
+    uint32_t autoSR_result[3] = {0};
+    MeasureOneTime(autoSR_result);
+    for(int chIdx=0; chIdx<3; chIdx++) {
+        offset[chIdx] = 0; // the offset value is not available when using Auto-SR
+        // MEMSIC support re AutoSR mode function:
+        //   SET, Sample1, RESET, Sample2, Output=(Sample1-Sample2)/2.
+        // That is wrong: The 0-field value is 0x20000
+        field [chIdx] = (int32_t)autoSR_result[chIdx] - 0x20000; // Auto-SR value is centered around 0x2000
+    }
     return 0;
 }
 

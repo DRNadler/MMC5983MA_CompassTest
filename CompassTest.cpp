@@ -1,6 +1,6 @@
 /////////////////////////////////////////////////////////////////////////////
 // Name:        CompassTest.cpp
-// Purpose:     Windows test code for Qwiic-mounted MMC5983MA compass chip
+// Purpose:     Windows test code for Qwiic-attached MMC5983MA compass chip
 // Author:      Dave Nadler
 // Modified by:
 // Created:     17-November-2023
@@ -11,7 +11,7 @@
 /*
 MIT License
 
-Copyright (c) 2023 Dave Nadler
+Copyright (c) 2023-2025 Dave Nadler
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -61,10 +61,11 @@ SOFTWARE.
 // ----------------------------------------------------------------------------
 // Globals for compass including IO support via MCP2221
 // ----------------------------------------------------------------------------
-MCP2221 mcp2221;
-MMC5983MA_IO_WindowsQwiic_MCP2221_C* pCompassIO = 0;
-typedef MMC5983MA_C< MMC5983MA_IO_WindowsQwiic_MCP2221_C> MMC5983MA_C_local;
-MMC5983MA_C_local* pCompass = 0;
+
+class MMC5983MA_C_local: public MMC5983MA_C<MMC5983MA_IO_WindowsQwiic_MCP2221_C> {
+public:
+    MCP2221& GetMCP2221() { return dev.mcp2221; };
+} compass;
 
 
 // ----------------------------------------------------------------------------
@@ -109,10 +110,7 @@ MyFrame::~MyFrame()
 {
     m_timer_TakeCompassReading.Stop();
     delete wxLog::SetActiveTarget(m_logOld);
-    // ToDo: mcp2221.Close(); // should close DLL/FT232H connection? Omission seems not to cause problems...
-    delete pCompass;
-    delete pCompassIO;
-}
+ }
 
 void MyFrame::OnQuit(wxCommandEvent& WXUNUSED(event))
 {
@@ -121,20 +119,26 @@ void MyFrame::OnQuit(wxCommandEvent& WXUNUSED(event))
 
 void MyFrame::OnAbout(wxCommandEvent& WXUNUSED(event))
 {
-    wxMessageDialog dialog(this, "Dave's Qwiic-attached MMC5983MA compass test\nDave Nadler (c) 2023\n" 
+    wxMessageDialog dialog(this, "Dave's Qwiic-attached MMC5983MA compass test\nDave Nadler (c) 2023-2025\n" 
         "\nBuilt with " + wxGetLibraryVersionInfo().GetDescription(),
         "About Compass Test");
     dialog.ShowModal();
 }
 
 void MyFrame::StartStopClicked(wxCommandEvent&) {
-    if (!mcp2221.IsOpen()) {
-        mcp2221.Init(); // locate and open an MCP2221 USB-to-Qwiic device
-        wxLogMessage("%d MCP2221s found connected to this PC; first one opened OK.", mcp2221.connectedDevices);
-        pCompassIO = new MMC5983MA_IO_WindowsQwiic_MCP2221_C(mcp2221);
-        pCompass = new MMC5983MA_C<MMC5983MA_IO_WindowsQwiic_MCP2221_C>(*pCompassIO);
-        pCompass->Init(); // resets, verifies compass product ID over I2C bus, throws on failure
-        assert(pCompass->initialized);
+    if (!compass.initialized) {
+        // Init:
+        // - locate and open an MCP2221 USB-to-Qwiic device
+        // - resets, verifies compass product ID over I2C bus, throws on failure
+        try {
+            compass.Init();
+        } catch(const std::exception& e) {
+            wxMessageDialog dialog(this, e.what(), "Error connecting to compass");
+            dialog.ShowModal();
+            return;
+        }
+        wxLogMessage("%d MCP2221s found connected to this PC; first one opened OK.", compass.GetMCP2221().connectedDevices);
+        assert(compass.initialized);
         wxLogMessage("Compass initialized AOK");
         wxLogMessage("=======================================");
     };
@@ -148,13 +152,13 @@ void MyFrame::StartStopClicked(wxCommandEvent&) {
 void MyFrame::Make_A_Measurement() {
     const double nominalFieldmG = 512.63; // ~ strength of Earth's field at Dave's desk; see below.
     wxLogMessage("Measure_XYZ_Field_WithResetSet...");
-    pCompass->Measure_XYZ_Field_WithResetSet();
+    compass.Measure_XYZ_Field_WithResetSet();
     wxLogMessage("-----------");
-    wxLogMessage("Compass: SET/RESET offsets (zero-point, nominal 0x20000): x%05lx, x%05lx, x%05lx", pCompass->offset[0], pCompass->offset[1], pCompass->offset[2]);
-    wxLogMessage("Compass: sensors (adjusted for offset): x%05lx, x%05lx, x%05lx", pCompass->field[0], pCompass->field[1], pCompass->field[2]);
+    wxLogMessage("Compass: SET/RESET offsets (zero-point, nominal 0x20000): x%05lx, x%05lx, x%05lx", compass.offset[0], compass.offset[1], compass.offset[2]);
+    wxLogMessage("Compass: sensors (adjusted for offset): x%05lx, x%05lx, x%05lx", compass.field[0], compass.field[1], compass.field[2]);
     //
     // WAG as to sign and X vs. Y orientation
-    double heading = 180.0 - atan2(-pCompass->field[0], -pCompass->field[1]) * 180 / M_PI;
+    double heading = 180.0 - atan2(-compass.field[0], -compass.field[1]) * 180 / M_PI;
     wxString report_Heading;
     report_Heading.Printf("Compass: %6.2f", heading);
     m_CompassResult_staticText->SetLabelText(report_Heading);
@@ -163,7 +167,7 @@ void MyFrame::Make_A_Measurement() {
     // Detail into m_CompassOffsets_staticText
     double offset_mG[3]; double averageOffset_mG = 0.0;
     for (int i = 0; i < 3; i++) {
-        offset_mG[i] = (double)(((int)pCompass->offset[i])-0x20000) / 16.384;
+        offset_mG[i] = (double)(((int)compass.offset[i])-0x20000) / 16.384;
         averageOffset_mG += abs(offset_mG[i])/3;
     };
     wxString report_offset;
@@ -174,7 +178,7 @@ void MyFrame::Make_A_Measurement() {
     report_offset.Replace("%", "%%"); // so wxLog doesn't expand percentage as a printf-style format specifier
     wxLogMessage(report_offset);
     //
-    // Earth's magnetic field intensity is roughly between 25,000 - 65,000 nT. That's 250-650 mG.
+    // Earth's magnetic field intensity is roughly between 25,000 - 65,000 nT (.25 - .65 gauss). That's 250-650 mG.
     /*
      * From WMM, for 42N,71W,0MSL (100nT = 1mG)
      *      Total   Horizontal       North       East     Vertical  Declination  Inclination
@@ -182,7 +186,7 @@ void MyFrame::Make_A_Measurement() {
      */
     double sensors_mG[3]; double totalField_mG = 0.0;
     for (int i = 0; i < 3; i++) {
-        sensors_mG[i] = (double)pCompass->field[i] /
+        sensors_mG[i] = (double)compass.field[i] /
             ((double)MMC5983MA_C_local::CountsPerGauss/1000.0); // ie 16.384
         totalField_mG += pow(sensors_mG[i],2);
     };
@@ -232,7 +236,7 @@ int MMC5983MA_IO_WindowsQwiic_MCP2221_C::DiagPrintf(const char* format, ...) {
     wxLogMessage(logText);
 #else
     char tmp[200];
-    int r = vsprintf(tmp, format, args);
+    int r = vsnprintf(tmp, sizeof(tmp), format, args);
     wxString tmp2(tmp);
     tmp2.Replace("\n", ""); // avoid extra blank lines in log window
     wxLogMessage(tmp2);

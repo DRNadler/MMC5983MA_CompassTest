@@ -3,7 +3,7 @@
 /*
 MIT License
 
-Copyright (c) 2023 Dave Nadler
+Copyright (c) 2023-2025 Dave Nadler
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -33,13 +33,13 @@ SOFTWARE.
 // Provide IO primitives for MMC5983MA API
 class MMC5983MA_IO_WindowsQwiic_MCP2221_C : public MMC5983MA_IO_base_C {
 public:
-    MCP2221& mcp2221; // IO device
-    MMC5983MA_IO_WindowsQwiic_MCP2221_C(MCP2221& _mcp2221) : mcp2221(_mcp2221), MMC5983MA_IO_base_C(I2C) {}; // Warning: no communications initialization in ctor
+    MCP2221 mcp2221; // IO device
+    MMC5983MA_IO_WindowsQwiic_MCP2221_C() : MMC5983MA_IO_base_C(I2C) {}; // Warning: no communications initialization in ctor
     // Implement the base class IO function suggestions in this derived class
     void read(uint8_t reg_addr, uint8_t(&read_data)[], uint32_t len);
     void write(uint8_t reg_addr, const uint8_t(&write_data)[], uint32_t len);
     void delay_us(uint32_t period);
-    void init(); // not invoked by MMC5983MA_C; do this before using MMC5983MA_IO_WindowsQwiic_C!
+    void Init(); // not invoked by ctors; do this before using MMC5983MA_IO_WindowsQwiic_C!
     int last_IO_status = 0;
     bool IO_OK(void) { return last_IO_status == 0; };
     // const uint8_t slave7bitAddress = 0x77; // kludge try DSP310

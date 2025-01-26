@@ -3,7 +3,7 @@
 /*
 MIT License
 
-Copyright (c) 2023 Dave Nadler
+Copyright (c) 2023-2025 Dave Nadler
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -24,7 +24,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-
+#include <stdexcept>
 #ifndef MCP2221_LIB
   #define MCP2221_LIB // Specify we're importing Microchip LIB symbols
 #endif
@@ -36,8 +36,10 @@ bool MCP2221::Init()
     const unsigned int MCP2221_PID = 0xDD; // default PID
 
     Mcp2221_GetConnectedDevices(MCP2221_VID, MCP2221_PID, &connectedDevices);
-    if (connectedDevices <= 0) throw "No MCP2221 connected to this PC";
+    if (connectedDevices <= 0)
+        throw std::runtime_error("No MCP2221 connected to this PC");
     handle = Mcp2221_OpenByIndex(MCP2221_VID, MCP2221_PID, 0);
-    if (handle == 0) throw "Mcp2221_OpenByIndex failed";
+    if (handle == 0)
+        throw std::runtime_error("Mcp2221_OpenByIndex failed");
     return false;
 }

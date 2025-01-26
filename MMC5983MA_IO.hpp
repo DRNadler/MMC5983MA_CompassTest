@@ -1,11 +1,10 @@
-/// MMC5983MA_IO.hpp - MMC5983MA_IO_Base_C class - IO for MEMSIC MMC5983MA
-/// 3-axis magnetometer driver template class.
-// DRNadler 26-June-2023
+/// MMC5983MA_IO.hpp - MMC5983MA_IO_Base_C class  <BR>
+/// IO for MEMSIC MMC5983MA 3-axis magnetometer driver template class.
 
 /*
 MIT License
 
-Copyright (c) 2023 Dave Nadler
+Copyright (c) 2023-2025 Dave Nadler
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -31,14 +30,16 @@ SOFTWARE.
 
 /// You must provide a class TDEVICE implementing platform-specific device IO
 /// to the MMC5983MA_C template. Either:
-/// a) Implement MMC5983MA_IO_base_C members directly, or
-/// b) Implement a derived class, adding any required instance data (ie chip select used, error details).
-/// Note: Using a template avoids all indirect call overhead (from virtual functions or C function pointers).
+/// - Implement MMC5983MA_IO_base_C members directly, or
+/// - Implement a derived class, adding any required instance data (ie chip select used, error details).
+/// Note: Using a template avoids all indirect call overhead (from virtual functions or C function pointers).  <BR>
 class MMC5983MA_IO_base_C {
   public:
     typedef enum { SPI, I2C } InterfaceType_T;
 	const InterfaceType_T interfaceType;
-	// ToDo: MMC5983MA_IO_base_C init()
+	bool UsesSPI() const { return interfaceType==SPI; };
+	/// Platform-specific Initialization
+	bool Init();
 	/// Platform-specific bus read
 	void read(uint8_t reg_addr, uint8_t (&read_data)[], uint32_t len);
 	/// Platform-specific bus write
@@ -48,10 +49,9 @@ class MMC5983MA_IO_base_C {
 	/// Did last IO operation succeed?
 	bool IO_OK();
 	/// Application must implement printf-analog if MMC5983MA_PRINT_DETAILED_LOG is defined in MMC5983MA_C
+	int DiagPrintf(const char* format, ...);
 	#ifdef __GNUG__
-		int DiagPrintf(const char* format, ...); __attribute__((format(printf, 2, 3)));
-	#else
-		int DiagPrintf(const char* format, ...); // __attribute__((format(printf, 2, 3)));
+		__attribute__((format(printf, 2, 3))); // help GCC do DiagPrintf format string checking
 	#endif
 
 	MMC5983MA_IO_base_C(InterfaceType_T interfaceType_) : interfaceType(interfaceType_) {};

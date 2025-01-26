@@ -3,7 +3,7 @@
 /*
 MIT License
 
-Copyright (c) 2023 Dave Nadler
+Copyright (c) 2023-2025 Dave Nadler
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -31,29 +31,10 @@ SOFTWARE.
 #include "MMC5983MA_IO_WindowsQwiic_MCP2221.hpp"
 
 
-void MMC5983MA_IO_WindowsQwiic_MCP2221_C::init() {
-    assert(mcp2221.IsOpen());
-    // Other actions???
-    #if 0 // FTDI attempt - could not get Adafruit FT232H USB-C - I2C adapter to work...
-        /* Open the first available channel */
-        FT_STATUS status = I2C_OpenChannel(/*channel=*/0, &ftHandle);
-        assert(status == FT_OK);
-        printf("\nhandle=0x%x status=%d\n", (unsigned int)ftHandle, status);
-        // === Init cribbed from example with no clue
-        //channelConf.ClockRate = I2C_CLOCK_FAST_MODE;/*i.e. 400000 KHz*/
-        channelConf.ClockRate = I2C_CLOCK_STANDARD_MODE;  /*i.e. 100000 KHz*/
-        channelConf.LatencyTimer = 255;
-        //channelConf.Options = I2C_DISABLE_3PHASE_CLOCKING;
-        //channelConf.Options = I2C_DISABLE_3PHASE_CLOCKING | I2C_ENABLE_DRIVE_ONLY_ZERO;
-        channelConf.Options = 0
-            | I2C_DISABLE_3PHASE_CLOCKING
-            | I2C_ENABLE_DRIVE_ONLY_ZERO /* pull-up resistors are on SEN-19921 sensor Qwiic board. */
-            //        | I2C_TRANSFER_OPTIONS_STOP_BIT /* ??? generate STOP condition before START-bit */
-            ;
-        status = I2C_InitChannel(ftHandle, &channelConf);
-        assert(status == FT_OK);
-        printf("MMC5983MA_IO_WindowsQwiic_C::init opened and initialized channel AOK\n");
-    #endif
+void MMC5983MA_IO_WindowsQwiic_MCP2221_C::Init() {
+    if(!mcp2221.IsOpen()) {
+        mcp2221.Init();
+    };
 }
 void  MMC5983MA_IO_WindowsQwiic_MCP2221_C::read(uint8_t registerAddress, uint8_t(&read_data)[], uint32_t len) {
     assert(mcp2221.IsOpen());
