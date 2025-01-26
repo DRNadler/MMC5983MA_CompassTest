@@ -1,0 +1,187 @@
+From 21-Dec-2023:
+With corrections below and turning Adafruit FT232H board I2C switch ON,
+LibMPSSE now runs example code OK, in both 32-bit and 64-bit builds,
+using locally-patched LibMPSSE_1.0.4
+
+Note:
+- the device and cable work fine with an MCP2221 (Microchip USB-to-I2C/Qwiic adapter).
+- testing uses AdaFruit FT232H Breakout - General Purpose USB to GPIO SPI I2C
+  USB C & Stemma QT Mouser No:485-2264 Mfr. No:2264
+  connected by Qwiic cable to
+  SparkFun Micro Magnetometer - MMC5983MA (Qwiic) SEN-19921
+- Sparkfun magnetometer desn't work correctly, likely because of overheating during soldering.
+
+BUG: FTDI code goes into infinite-loop until (1) below is corrected.
+
+Resolved: Turn I2C mode ON with tiny switch on AdaFruit board
+...I2C_DeviceWrite always reports FT_DEVICE_NOT_FOUND.
+
+Note: I set channelConf as follows:
+    channelConf.ClockRate = I2C_CLOCK_STANDARD_MODE;
+    channelConf.LatencyTimer = 100;
+    channelConf.Options = 0
+        | I2C_DISABLE_3PHASE_CLOCKING
+        | I2C_ENABLE_DRIVE_ONLY_ZERO /* pull-up resistors are on SEN-19921 sensor Qwiic board. */
+        ;
+    channelConf.Pin = channelConf.currentPinState = 0;
+I also tried different Options flag values; always same result.
+
+
+====================  FTDI code problems  ====================
+
+1) Version 1.0.4 ftdi_mid.h line 87 comments out FT_InitChannel without explanation:
+//FT_STATUS FT_InitChannel(FT_LegacyProtocol Protocol, FT_HANDLE handle,...);
+Lack of definition causes a compile warning in ftdi_i2c.c and apparently runtime infinite-loop error:
+ftdi_i2c.c(393,11): warning C4013: 'FT_InitChannel' undefined; assuming extern returning int
+The routine is still provided and global in ftdi_mid.c but with a DIFFERENT function signature.
+Adding current declaration in ftdi_mid.h corrects infinite-loop bug.
+
+2) Doesn't compile with C++:
+2a) ftdi_infra.h line 192 doesn't compile with C++ because there's a typedef of bool:
+    typedef BOOL	bool;
+2b) all headers are missing extern "C" for C++
+
+3) test.c sets channelConf.Options = 100; without explanation.
+100 is an illegal value according to the recently-added header documentation
+
+4) New channelConf fields channelConf.pin and channelConf.currentPinState:
+4a) test.c does not initialize these
+4b) there is no documentation about how these should be set for I2C
+
+5) Building 64-bit version shows improper conversion between pointers and unsigned int:
+QwiicFT.cpp(49,41): warning C4311: 'type cast': pointer truncation from 'FT_HANDLE' to 'unsigned int'
+QwiicFT.cpp(49,41): warning C4302: 'type cast': truncation from 'FT_HANDLE' to 'unsigned int'
+QwiicFT.cpp(134,64): warning C4311: 'type cast': pointer truncation from 'FT_HANDLE' to 'unsigned int'
+QwiicFT.cpp(134,64): warning C4302: 'type cast': truncation from 'FT_HANDLE' to 'unsigned int'
+
+6) Current 1.0.4 version is not on web site.
+Web site still has versions for Windows 2000 and XP!
+
+
+====================  Program Output  ====================
+
+Hello World!
+ftd2xx.dll loaded OK!
+Found at least one channel on FT232H
+Information on channel number 0:
+                Flags=0x2
+                Type=0x8
+                ID=0x4036014
+                LocId=0x23
+                SerialNumber=FTP6SN3W
+                Description=FT232H
+                ftHandle=0x0 (0 unless channel is open)
+
+Version Check
+libmpsse: 00010001
+libftd2xx: 00030216
+
+handle=0xdd8758 status=0
+MMC5983MA_IO_WindowsQwiic_C::init opened and initialized channel AOK
+set_reg 0a Control register 1 <= 80
+Hello World!
+ftd2xx.dll loaded OK!
+Found at least one channel on FT232H
+Information on channel number 0:
+                Flags=0x2
+                Type=0x8
+                ID=0x4036014
+                LocId=0x23
+                SerialNumber=FTP6SN3W
+                Description=FT232H
+                ftHandle=0x0 (0 unless channel is open)
+
+Version Check
+libmpsse: 00010001
+libftd2xx: 00030216
+
+handle=0xdc83a0 status=0
+MMC5983MA_IO_WindowsQwiic_C::init opened and initialized channel AOK
+set_reg 0a Control register 1 <= 80
+Wait >10mSec after reset
+get_reg 2f Product ID => 30
+set_reg 0a Control register 1 <= 00
+set_reg 09 Control register 0 <= 10
+set_reg 09 Control register 0 <= 01
+get_reg 08 Device status => 11
+get_reg 00 Xout [17:10] => 80
+get_reg 01 Xout [9:2] => bc
+get_reg 02 Yout [17:10] => 7a
+get_reg 03 Yout [9:2] => 48
+get_reg 04 Zout [17:10] => 77
+get_reg 05 Zout [9:2] => 33
+get_reg 06 Xout[1:0],Yout[1:0],Zout[1:0] => 94
+set_reg 09 Control register 0 <= 08
+set_reg 09 Control register 0 <= 01
+get_reg 08 Device status => 11
+get_reg 00 Xout [17:10] => 80
+get_reg 01 Xout [9:2] => b9
+get_reg 02 Yout [17:10] => 83
+get_reg 03 Yout [9:2] => 0f
+get_reg 04 Zout [17:10] => 88
+get_reg 05 Zout [9:2] => de
+get_reg 06 Xout[1:0],Yout[1:0],Zout[1:0] => 44
+Compass:   0.08
+set_reg 09 Control register 0 <= 10
+set_reg 09 Control register 0 <= 01
+get_reg 08 Device status => 11
+get_reg 00 Xout [17:10] => 84
+get_reg 01 Xout [9:2] => 22
+get_reg 02 Yout [17:10] => 7f
+get_reg 03 Yout [9:2] => 21
+get_reg 04 Zout [17:10] => 77
+get_reg 05 Zout [9:2] => 31
+get_reg 06 Xout[1:0],Yout[1:0],Zout[1:0] => 90
+set_reg 09 Control register 0 <= 08
+set_reg 09 Control register 0 <= 01
+get_reg 08 Device status => 11
+get_reg 00 Xout [17:10] => 7d
+get_reg 01 Xout [9:2] => 47
+get_reg 02 Yout [17:10] => 7e
+get_reg 03 Yout [9:2] => 77
+get_reg 04 Zout [17:10] => 88
+get_reg 05 Zout [9:2] => e8
+get_reg 06 Xout[1:0],Yout[1:0],Zout[1:0] => 5c
+Compass:  95.53
+set_reg 09 Control register 0 <= 10
+set_reg 09 Control register 0 <= 01
+get_reg 08 Device status => 11
+get_reg 00 Xout [17:10] => 80
+get_reg 01 Xout [9:2] => 01
+get_reg 02 Yout [17:10] => 82
+get_reg 03 Yout [9:2] => b3
+get_reg 04 Zout [17:10] => 77
+get_reg 05 Zout [9:2] => 6a
+get_reg 06 Xout[1:0],Yout[1:0],Zout[1:0] => e0
+set_reg 09 Control register 0 <= 08
+set_reg 09 Control register 0 <= 01
+get_reg 08 Device status => 11
+get_reg 00 Xout [17:10] => 81
+get_reg 01 Xout [9:2] => 92
+get_reg 02 Yout [17:10] => 7b
+get_reg 03 Yout [9:2] => 3c
+get_reg 04 Zout [17:10] => 88
+get_reg 05 Zout [9:2] => c4
+get_reg 06 Xout[1:0],Yout[1:0],Zout[1:0] => 8c
+Compass: 191.83
+set_reg 09 Control register 0 <= 10
+set_reg 09 Control register 0 <= 01
+get_reg 08 Device status => 11
+get_reg 00 Xout [17:10] => 7d
+get_reg 01 Xout [9:2] => 14
+get_reg 02 Yout [17:10] => 7e
+get_reg 03 Yout [9:2] => b4
+get_reg 04 Zout [17:10] => 77
+get_reg 05 Zout [9:2] => 1c
+get_reg 06 Xout[1:0],Yout[1:0],Zout[1:0] => 34
+set_reg 09 Control register 0 <= 08
+set_reg 09 Control register 0 <= 01
+get_reg 08 Device status => 11
+get_reg 00 Xout [17:10] => 84
+get_reg 01 Xout [9:2] => 65
+get_reg 02 Yout [17:10] => 7f
+get_reg 03 Yout [9:2] => 29
+get_reg 04 Zout [17:10] => 89
+get_reg 05 Zout [9:2] => 15
+get_reg 06 Xout[1:0],Yout[1:0],Zout[1:0] => 3c
+Compass: 273.57
