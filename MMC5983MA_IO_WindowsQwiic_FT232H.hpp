@@ -3,7 +3,7 @@
 /*
 MIT License
 
-Copyright (c) 2023 Dave Nadler
+Copyright (c) 2023-2025 Dave Nadler
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -27,6 +27,8 @@ SOFTWARE.
 #ifndef MMC5983MA_IO_WindowsQwiic_FT232H_HPP_INCLUDED
 #define MMC5983MA_IO_WindowsQwiic_FT232H_HPP_INCLUDED
 
+#include <thread>
+
 #include "MMC5983MA_IO.hpp"
 extern "C" { // antique FTDI headers lack this
     #include "ftdi_infra.h"  /*Common portable infrastructure (datatypes, libraries, etc)*/
@@ -36,7 +38,7 @@ extern "C" { // antique FTDI headers lack this
     #include "libMPSSE_i2c.h" // Bizarrely, redefines stuff from ftdi_i2c.h
 }
 
-// Provide IO primitives for MMC5983MA API
+// Provide IO primitives for MMC5983MA IO wrapping FT232H API
 class MMC5983MA_IO_WindowsQwiic_FT232H_C : public MMC5983MA_IO_base_C {
 public:
     MMC5983MA_IO_WindowsQwiic_FT232H_C() : MMC5983MA_IO_base_C(I2C) {}; // Warning: no communications initialization in ctor
@@ -78,7 +80,7 @@ public:
     void delay_us(uint32_t uSecs) {
         std::this_thread::sleep_for(std::chrono::microseconds(uSecs));
     };
-    void init() { // not invoked by MMC5983MA_C; do this before using MMC5983MA_IO_WindowsQwiic_C!
+    void Init() { // not invoked by ctor; do this before using IO functions!
         Init_libMPSSE(); // This application builds MPSSE components into EXE; so Init_lib is not automatically called on DLL load.
         DiagPrintf("ftd2xx.dll loaded OK!\n");
         DWORD numChannels;
@@ -127,15 +129,14 @@ public:
         channelConf.Pin = channelConf.currentPinState = 0; // DRN guess
         ftStatus = I2C_InitChannel(ftHandle, &channelConf);
         assert(ftStatus == FT_OK);
-        DiagPrintf("MMC5983MA_IO_WindowsQwiic_C::init opened and initialized channel AOK\n");
+        DiagPrintf("MMC5983MA_IO_WindowsQwiic_FT232H_C::init opened and initialized channel AOK\n");
     };
     bool IO_OK(void) { return ftStatus == 0; };
     const static uint8_t slave7bitAddress = (0b0110000); /// The MEMSIC device 7 - bit device WRITE address is[0110000] (left-shifted, then optional OR'd with read-bit 1)
     /// Application must implement printf-analog if MMC5983MA_PRINT_DETAILED_LOG is defined in MMC5983MA_C
+    int DiagPrintf(const char* format, ...);
     #ifdef __GNUG__
-        int DiagPrintf(const char* format, ...); __attribute__((format(printf, 2, 3)));
-    #else
-        int DiagPrintf(const char* format, ...); // __attribute__((format(printf, 2, 3)));
+        __attribute__((format(printf, 2, 3))); // help GCC check DiagPrintf format against provided arguments
     #endif
     // FTDI-specific stuff
     FT_HANDLE ftHandle = 0;

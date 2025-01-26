@@ -49,10 +49,11 @@ SOFTWARE.
 #include "wx/selstore.h"
 #include "wx/version.h"
 
-// Microchip MCP2221 USB-to-I2C adapter to drive Qwiic sensors
-#include "MCP2221.hpp"
-
+// USB-to-I2C adapters to drive Qwiic sensors (Microchip MCP2221, FT232H)
 #include "MMC5983MA_IO_WindowsQwiic_MCP2221.hpp"
+#include "MMC5983MA_IO_WindowsQwiic_FT232H.hpp"
+// #define USE_MCP2221
+
 #include "MMC5983MA.hpp"
 
 #include "CompassTest.h"
@@ -62,10 +63,15 @@ SOFTWARE.
 // Globals for compass including IO support via MCP2221
 // ----------------------------------------------------------------------------
 
-class MMC5983MA_C_local: public MMC5983MA_C<MMC5983MA_IO_WindowsQwiic_MCP2221_C> {
-public:
-    MCP2221& GetMCP2221() { return dev.mcp2221; };
-} compass;
+#ifdef USE_MCP2221
+  class MMC5983MA_C_local: public MMC5983MA_C<MMC5983MA_IO_WindowsQwiic_MCP2221_C> {
+    public:
+      MCP2221& GetMCP2221() { return dev.mcp2221; };
+  } compass;
+#else
+  class MMC5983MA_C_local: public MMC5983MA_C<MMC5983MA_IO_WindowsQwiic_FT232H_C> {
+  } compass;
+#endif
 
 
 // ----------------------------------------------------------------------------
@@ -137,7 +143,9 @@ void MyFrame::StartStopClicked(wxCommandEvent&) {
             dialog.ShowModal();
             return;
         }
-        wxLogMessage("%d MCP2221s found connected to this PC; first one opened OK.", compass.GetMCP2221().connectedDevices);
+        #ifdef USE_MCP2221
+          wxLogMessage("%d MCP2221s found connected to this PC; first one opened OK.", compass.GetMCP2221().connectedDevices);
+        #endif
         assert(compass.initialized);
         wxLogMessage("Compass initialized AOK");
         wxLogMessage("=======================================");
@@ -216,6 +224,10 @@ void MyFrame::Make_A_Measurement() {
     m_ObservedCompassOffsets_staticText->SetLabel(report_AvgMinMax);
     wxLogMessage(report_AvgMinMax);
     //
+    // compass.Measure_XYZ_Field_WithAutoSR();
+
+
+
     wxLogMessage("=======================================");
     // No effect: this->Layout();
     // No effect: SendSizeEvent();
@@ -224,6 +236,7 @@ void MyFrame::Make_A_Measurement() {
 // ----------------------------------------------------------------------------
 // Diagnostic output for MMC5983MA_C_local (MMC5983MA_C register IO trace)
 // ----------------------------------------------------------------------------
+// ToDo: Clean this up to eliminate cut-and-past; should be static methods?
 int MMC5983MA_IO_WindowsQwiic_MCP2221_C::DiagPrintf(const char* format, ...) {
     va_list args;
     va_start(args, format);
@@ -244,3 +257,24 @@ int MMC5983MA_IO_WindowsQwiic_MCP2221_C::DiagPrintf(const char* format, ...) {
     va_end(args);
     return r;
 };
+int MMC5983MA_IO_WindowsQwiic_FT232H_C::DiagPrintf(const char* format, ...) {
+    va_list args;
+    va_start(args, format);
+#if 0
+    // PrintfV returns a too-long length wxString with junk after correct string except missing trailing newline.
+    // Confused about character encoding in use; deranged by newline character in format string?
+    wxString logText;
+    int r = logText.PrintfV(format, args);
+    logText.Replace("\n", ""); // avoid extra blank lines in log window
+    wxLogMessage(logText);
+#else
+    char tmp[200];
+    int r = vsnprintf(tmp, sizeof(tmp), format, args);
+    wxString tmp2(tmp);
+    tmp2.Replace("\n", ""); // avoid extra blank lines in log window
+    wxLogMessage(tmp2);
+#endif
+    va_end(args);
+    return r;
+};
+

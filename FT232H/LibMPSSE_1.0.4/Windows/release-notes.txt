@@ -1,0 +1,63 @@
+libmpsse Release Notes
+
+Limitations
+1) The APIs I2C_GetNumChannels, I2C_GetChannelInfo and I2C_OpenChannel do not work when they are called simultaneously from multiple applications at the same time.
+2) LatencyTimer should be greater than 0 for FT232H
+
+1.0.4
+December 2024
+1. Fixed the issue where SDA has been left out as input
+2. Introduced a config option to keep the states of GPIOs during MPSSE Init / Reset.
+
+1.0.3
+July 2022
+1) Performance Improvement: Removed a delay used in SPI_ToggleCS function.
+
+1.0.2
+June 2022
+1) Added HP Product support.
+
+1.0.1
+Feb 2021
+1) New files layout and build files.
+2) Changed calling types in API to match underlying libftd2xx types and use ftd2xx.h typedefs rather than locally defined types.
+3) Added build options for platform types supported by libftd2xx library.
+
+0.4
+20 May 2014
+1) Solved bug: Glitch on I2C clock
+2) Solved bug: compilation failure in release mode with MSVC version 2010
+3) Solved bug: Memory leakage in SPI mode
+4) Solved bug: MSVC version 2010 release mode compilation failure
+
+0.3
+20 May 2011
+1) Change in APIs I2C_GetChannelInfo & I2C_OpenChannel to start indexing channels from 0
+2) Solved bug: I2C_GetNumChannels reports only one available channel when FT2232H chip is conected
+3) Exported library infrastructure functions for initializing library when used with VC++ in static mode
+
+0.2
+08 July 2011
+1) Added functions Init_libMPSSE and Cleanup_libMPSSE
+2) Added functions FT_ReadGPIO & FT_WriteGPIO
+3) Added 3-phase clocking functionality. This functionality is enabled by default.
+
+0.1
+12 December 2011
+1) FT_IO_ERROR was returned when a device doesn't respond to the master when it is addressed, as well as when a data transfer fails. To distinguish between these to errors, FT_DEVICE_NOT_FOUND is now returned after a device doesn't respond when its addressed
+2) Clock rate adjustments are now performed within the library when 3-phase-clocking is enabled.
+3) Changes made to support 64bit linux
+4) New features added:
+	a) I2C_ENABLE_DRIVE_ONLY_ZERO : Support for Drive-Only-Zero feature
+	b) I2C_TRANSFER_OPTIONS_NACK_LAST_BYTE : Support nAcking last byte from I2C_DeviceRead
+	c) I2C_TRANSFER_OPTIONS_BREAK_ON_NACK : Provide option to stop writing data when slave nAcks
+	d) I2C_TRANSFER_OPTIONS_FAST_TRANSFER_BYTES : Read/write data without delays in between START/ADDRESS/DATA/STOP phases
+	e) I2C_TRANSFER_OPTIONS_FAST_TRANSFER_BITS : Added support to read/write any number of bits
+	f) I2C_TRANSFER_OPTIONS_NO_ADDRESS : Added support to exclude the address and directions bits, this 
+	feature can be used with I2C_TRANSFER_OPTIONS_FAST_TRANSFER_BITS to support non standard implementations.
+5) Added new function SPI_ReadWrite that clocks data in and out simultaneously
+6) Added functionality to Read/Write multiple bytes per USB frame when SPI_TRANSFER_OPTION_SIZE_IN_BYTES bit is set in transferOptions
+7) Added 64bit linux support
+8) Adapted to new release folder structure - unified sample code for windows & linux
+9) Updated build scripts
+10) Bug Fixed: sizeTransferred used to always return 0 if bit SPI_TRANSFER_OPTION_SIZE_IN_BYTES was set

@@ -149,7 +149,6 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <OutDir>vc_mswud_x64\</OutDir>
-    <IntDir>vc_mswud_x64\CompassTest\</IntDir>
     <LinkIncremental>true</LinkIncremental>
     <GenerateManifest>true</GenerateManifest>
   </PropertyGroup>
@@ -401,8 +400,8 @@
     <ClCompile>
       <AdditionalOptions>/MP %(AdditionalOptions)</AdditionalOptions>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>$(wxWidgets)\lib\vc_lib\mswud;$(wxWidgets)\include;.;$(wxWidgets)\samples;$(ProjectDir)\MCP2221_DLL;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>MCP2221_LIB;WIN32;_DEBUG;_CRT_SECURE_NO_DEPRECATE=1;_CRT_NON_CONFORMING_SWPRINTFS=1;_SCL_SECURE_NO_WARNINGS=1;__WXMSW__;_UNICODE;_WINDOWS;NOPCH;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>.;$(wxWidgets)\lib\vc_lib\mswud;$(wxWidgets)\include;$(wxWidgets)\samples;$(ProjectDir)MCP2221_DLL;$(ProjectDir)FT232H\LibMPSSE_1.0.4\Windows\source;$(ProjectDir)FT232H\LibMPSSE_1.0.4\Windows\include;$(ProjectDir)FT232H\LibMPSSE_1.0.4\Windows\libftd2xx;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>FTDIMPSSE_STATIC;FT_VER_MAJOR=1;FT_VER_MINOR=0;FT_VER_BUILD=1;MCP2221_LIB;WIN32;_DEBUG;_CRT_SECURE_NO_DEPRECATE=1;_CRT_NON_CONFORMING_SWPRINTFS=1;_SCL_SECURE_NO_WARNINGS=1;__WXMSW__;_UNICODE;_WINDOWS;NOPCH;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ExceptionHandling>Sync</ExceptionHandling>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
@@ -414,7 +413,7 @@
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <DisableSpecificWarnings>5054</DisableSpecificWarnings>
+      <DisableSpecificWarnings>5054;4100</DisableSpecificWarnings>
       <LanguageStandard_C>stdc11</LanguageStandard_C>
     </ClCompile>
     <ResourceCompile>
@@ -423,9 +422,9 @@
       <AdditionalIncludeDirectories>$(wxWidgets)\lib\vc_lib\mswud;$(wxWidgets)\include;.;$(wxWidgets)\samples;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Link>
-      <AdditionalDependencies>mcp2221_dll_um_x64.lib;wxmsw32ud_core.lib;wxbase32ud.lib;wxtiffd.lib;wxjpegd.lib;wxpngd.lib;wxzlibd.lib;wxregexud.lib;wxexpatd.lib;kernel32.lib;user32.lib;gdi32.lib;comdlg32.lib;winspool.lib;winmm.lib;shell32.lib;shlwapi.lib;comctl32.lib;ole32.lib;oleaut32.lib;uuid.lib;rpcrt4.lib;advapi32.lib;version.lib;wsock32.lib;wininet.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>mcp2221_dll_um_x64.lib;ftd2xx.lib;wxmsw32ud_core.lib;wxbase32ud.lib;wxtiffd.lib;wxjpegd.lib;wxpngd.lib;wxzlibd.lib;wxregexud.lib;wxexpatd.lib;kernel32.lib;user32.lib;gdi32.lib;comdlg32.lib;winspool.lib;winmm.lib;shell32.lib;shlwapi.lib;comctl32.lib;ole32.lib;oleaut32.lib;uuid.lib;rpcrt4.lib;advapi32.lib;version.lib;wsock32.lib;wininet.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SuppressStartupBanner>true</SuppressStartupBanner>
-      <AdditionalLibraryDirectories>$(ProjectDir)\MCP2221_DLL\dll;$(wxWidgets)\lib\vc_x64_lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(wxWidgets)\lib\vc_x64_lib;$(ProjectDir)\MCP2221_DLL\dll;$(ProjectDir)FT232H\CDM-v2.12.36.4-WHQL-Certified\amd64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <ProgramDatabaseFile>vc_mswud_x64\CompassTest.pdb</ProgramDatabaseFile>
       <SubSystem>Windows</SubSystem>
@@ -570,6 +569,9 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="CompassTest.cpp" />
+    <ClCompile Include="FT232H\LibMPSSE_1.0.4\Windows\source\ftdi_i2c.c" />
+    <ClCompile Include="FT232H\LibMPSSE_1.0.4\Windows\source\ftdi_infra.c" />
+    <ClCompile Include="FT232H\LibMPSSE_1.0.4\Windows\source\ftdi_mid.c" />
     <ClCompile Include="LayoutGeneratedFiles\CompassLayout_Base_Classes.cpp" />
     <ClCompile Include="MCP2221.cpp" />
     <ClCompile Include="MMC5983MA_IO_WindowsQwiic_MCP2221.cpp" />
@@ -584,6 +586,9 @@
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="CompassTest.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="FT232H\FTDI_libMPSSE_problems.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

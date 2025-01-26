@@ -1,6 +1,7 @@
 .vs
 vc_mswud
 vc_mswud_x64
+Compass Test
 bin
 obj
 *.bak
