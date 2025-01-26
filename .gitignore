@@ -6,7 +6,6 @@ bin
 obj
 *.bak
 *.vcxproj.user
-*.vcxproj.filters
 *.aps
 reference
 *.ods#

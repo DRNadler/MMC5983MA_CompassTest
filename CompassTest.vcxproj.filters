@@ -1,0 +1,39 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="CompassTest.cpp" />
+    <ClCompile Include="LayoutGeneratedFiles\CompassLayout_Base_Classes.cpp" />
+    <ClCompile Include="MCP2221.cpp" />
+    <ClCompile Include="MMC5983MA_IO_WindowsQwiic_MCP2221.cpp" />
+    <ClCompile Include="FT232H\LibMPSSE_1.0.4\Windows\source\ftdi_i2c.c">
+      <Filter>FTDI</Filter>
+    </ClCompile>
+    <ClCompile Include="FT232H\LibMPSSE_1.0.4\Windows\source\ftdi_infra.c">
+      <Filter>FTDI</Filter>
+    </ClCompile>
+    <ClCompile Include="FT232H\LibMPSSE_1.0.4\Windows\source\ftdi_mid.c">
+      <Filter>FTDI</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="CompassTest.h" />
+    <ClInclude Include="LayoutGeneratedFiles\CompassLayout_Base_Classes.h" />
+    <ClInclude Include="MCP2221.hpp" />
+    <ClInclude Include="MMC5983MA.hpp" />
+    <ClInclude Include="MMC5983MA_IO.hpp" />
+    <ClInclude Include="MMC5983MA_IO_WindowsQwiic_MCP2221.hpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="CompassTest.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="FTDI">
+      <UniqueIdentifier>{4e483054-1737-46ea-8cb6-76670052cf3b}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="FT232H\FTDI_libMPSSE_problems.txt">
+      <Filter>FTDI</Filter>
+    </Text>
+  </ItemGroup>
+</Project>
