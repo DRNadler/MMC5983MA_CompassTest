@@ -191,7 +191,7 @@ void MyFrame::Make_A_Measurement() {
      *  51,263 nT    20,728 nT   20,104 nT   -5047 nT    46,885 nT      -14.09°       66.15°
      */
     double sensors_mG[3]; double totalField_mG = 0.0;
-    auto Reportorama = [this, &sensors_mG, &totalField_mG] (const char* pContextString) {
+    auto Report_Field_mG = [this, &sensors_mG, &totalField_mG] (const char* pContextString) {
         for (int i = 0; i < 3; i++) {
             sensors_mG[i] = (double)compass.field[i] /
                 ((double)MMC5983MA_C_local::CountsPerGauss/1000.0); // ie 16.384
@@ -207,7 +207,7 @@ void MyFrame::Make_A_Measurement() {
         report_FieldStrength.Replace("%", "%%"); // so wxLog doesn't expand percentage as a printf-style format specifier
         wxLogMessage(report_FieldStrength);
     };
-    Reportorama("cmd  SR");
+    Report_Field_mG("cmd  SR");
     //
     static double minReadings_mG[3] = { 0.0, 0.0, 0.0 }, maxReadings_mG[3] = {0.0, 0.0, 0.0}, avgReadings_mG[3] = { 0.0, 0.0, 0.0 };
     for (int i = 0; i < 3; i++) {
@@ -227,7 +227,7 @@ void MyFrame::Make_A_Measurement() {
     wxLogMessage(report_AvgMinMax);
     //
     compass.Measure_XYZ_Field_WithAutoSR();
-    Reportorama("Auto-SR");
+    Report_Field_mG("Auto-SR");
 
 
 
