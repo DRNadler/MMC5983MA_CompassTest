@@ -36,24 +36,26 @@ SOFTWARE.
 class MMC5983MA_IO_base_C {
   public:
     typedef enum { SPI, I2C } InterfaceType_T;
-	const InterfaceType_T interfaceType;
-	bool UsesSPI() const { return interfaceType==SPI; };
-	/// Platform-specific Initialization
-	bool Init();
-	/// Platform-specific bus read
-	void read(uint8_t reg_addr, uint8_t (&read_data)[], uint32_t len);
-	/// Platform-specific bus write
-	void write(uint8_t reg_addr, const uint8_t (&write_data)[], uint32_t len);
-	/// Platform-specific delay before return
-	void delay_us(uint32_t uSecs);
-	/// Did last IO operation succeed?
-	bool IO_OK();
-	/// Application must implement printf-analog if MMC5983MA_PRINT_DETAILED_LOG is defined in MMC5983MA_C
-	static int DiagPrintf(const char* format, ...);
-	#ifdef __GNUG__
-		__attribute__((format(printf, 2, 3))); // help GCC do DiagPrintf format string checking
-	#endif
-	MMC5983MA_IO_base_C(InterfaceType_T interfaceType_) : interfaceType(interfaceType_) {};
+    MMC5983MA_IO_base_C(InterfaceType_T interfaceType_) : interfaceType(interfaceType_) {};
+    const InterfaceType_T interfaceType;
+    bool UsesSPI() const { return interfaceType==SPI; };
+    /// Platform-specific Initialization
+    bool Init();
+    /// Platform-specific bus read
+    void read(uint8_t reg_addr, uint8_t (&read_data)[], uint32_t len);
+    /// Platform-specific bus write
+    void write(uint8_t reg_addr, const uint8_t (&write_data)[], uint32_t len);
+    /// Platform-specific delay before return
+    void delay_us(uint32_t uSecs);
+    /// Did last IO operation succeed?
+    bool IO_OK();
+    /// Application must implement printf-analog if MMC5983MA_PRINT_DETAILED_LOG is defined in MMC5983MA_C
+    static int DiagPrintf(const char* format, ...)
+    #ifdef __GNUG__
+        __attribute__((format(printf, 1, 2))); // help GCC do DiagPrintf format string checking
+    #else
+        ;
+    #endif
 };
 
 #endif // MMC5983A_IO_HPP_INCLUDED
