@@ -100,7 +100,7 @@ public:
             DiagPrintf("		LocId=0x%x\n", devList.LocId);
             DiagPrintf("		SerialNumber=%s\n", devList.SerialNumber);
             DiagPrintf("		Description=%s\n", devList.Description);
-            DiagPrintf("		ftHandle=0x%x (0 unless channel is open)\n", (unsigned int)devList.ftHandle);
+            DiagPrintf("		ftHandle=0x%p (0 unless channel is open)\n", (void*)devList.ftHandle);
         }
         DiagPrintf("\nVersion Check\n");
         DWORD verMPSSE, verD2XX;
@@ -115,7 +115,7 @@ public:
             .LatencyTimer = 100,
             .Options = 0
                 | I2C_DISABLE_3PHASE_CLOCKING
-                | I2C_ENABLE_DRIVE_ONLY_ZERO /* pull-up resistors are on SEN-19921 sensor Qwiic board. */
+                | I2C_ENABLE_DRIVE_ONLY_ZERO /* pull-up resistors are Sparkfun SEN-19921 sensor Qwiic and MEMSIC eval boards. */
                 ,
             .Pin = 0,
             .currentPinState = 0,
@@ -124,7 +124,7 @@ public:
         channelConf.LatencyTimer = 100;
         channelConf.Options = 0
             | I2C_DISABLE_3PHASE_CLOCKING
-            | I2C_ENABLE_DRIVE_ONLY_ZERO /* pull-up resistors are on SEN-19921 sensor Qwiic board. */
+            | I2C_ENABLE_DRIVE_ONLY_ZERO /* pull-up resistors are on Sparkfun SEN-19921 sensor Qwiic and MEMSIC eval boards. */
             ;
         channelConf.Pin = channelConf.currentPinState = 0; // DRN guess
         ftStatus = I2C_InitChannel(ftHandle, &channelConf);
@@ -133,11 +133,6 @@ public:
     };
     bool IO_OK(void) { return ftStatus == 0; };
     const static uint8_t slave7bitAddress = (0b0110000); /// The MEMSIC device 7 - bit device WRITE address is[0110000] (left-shifted, then optional OR'd with read-bit 1)
-    /// Application must implement printf-analog if MMC5983MA_PRINT_DETAILED_LOG is defined in MMC5983MA_C
-    int DiagPrintf(const char* format, ...);
-    #ifdef __GNUG__
-        __attribute__((format(printf, 2, 3))); // help GCC check DiagPrintf format against provided arguments
-    #endif
     // FTDI-specific stuff
     FT_HANDLE ftHandle = 0;
     FT_STATUS ftStatus = 0;

@@ -50,7 +50,7 @@ SOFTWARE.
 // USB-to-I2C adapters to drive Qwiic sensors (Microchip MCP2221, FT232H)
 #include "MMC5983MA_IO_WindowsQwiic_MCP2221.hpp"
 #include "MMC5983MA_IO_WindowsQwiic_FT232H.hpp"
-// #define USE_MCP2221
+// #define USE_MCP2221 // default is now FT232H
 
 #include "MMC5983MA.hpp"
 
@@ -240,7 +240,6 @@ void MyFrame::Make_A_Measurement() {
 // ----------------------------------------------------------------------------
 // Diagnostic output for MMC5983MA_C_local (MMC5983MA_C register IO trace)
 // ----------------------------------------------------------------------------
-// ToDo: Clean this up to eliminate cut-and-past; should be static methods?
 int MMC5983MA_IO_base_C::DiagPrintf(const char* format, ...) {
     va_list args;
     va_start(args, format);
@@ -261,24 +260,3 @@ int MMC5983MA_IO_base_C::DiagPrintf(const char* format, ...) {
     va_end(args);
     return r;
 };
-int MMC5983MA_IO_WindowsQwiic_FT232H_C::DiagPrintf(const char* format, ...) {
-    va_list args;
-    va_start(args, format);
-#if 0
-    // PrintfV returns a too-long length wxString with junk after correct string except missing trailing newline.
-    // Confused about character encoding in use; deranged by newline character in format string?
-    wxString logText;
-    int r = logText.PrintfV(format, args);
-    logText.Replace("\n", ""); // avoid extra blank lines in log window
-    wxLogMessage(logText);
-#else
-    char tmp[200];
-    int r = vsnprintf(tmp, sizeof(tmp), format, args);
-    wxString tmp2(tmp);
-    tmp2.Replace("\n", ""); // avoid extra blank lines in log window
-    wxLogMessage(tmp2);
-#endif
-    va_end(args);
-    return r;
-};
-
