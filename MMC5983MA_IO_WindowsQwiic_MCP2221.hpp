@@ -44,11 +44,6 @@ public:
     bool IO_OK(void) { return last_IO_status == 0; };
     // const uint8_t slave7bitAddress = 0x77; // kludge try DSP310
     const static uint8_t slave7bitAddress = (0b0110000); /// The MEMSIC device 7 - bit device WRITE address is[0110000] (left-shifted, then optional OR'd with read-bit 1)
-    /// Application must implement printf-analog if MMC5983MA_PRINT_DETAILED_LOG is defined in MMC5983MA_C
-    int DiagPrintf(const char* format, ...);
-    #ifdef __GNUG__
-        __attribute__((format(printf, 2, 3))); // help GCC check DiagPrintf format against provided arguments
-    #endif
 };
 
 #endif // MMC5983MA_IO_WindowsQwiic_MCP2221_HPP_INCLUDED

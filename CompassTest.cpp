@@ -2,9 +2,7 @@
 // Name:        CompassTest.cpp
 // Purpose:     Windows test code for Qwiic-attached MMC5983MA compass chip
 // Author:      Dave Nadler
-// Modified by:
-// Created:     17-November-2023
-// Copyright:   (c) 2023 Dave Nadler
+// Copyright:   (c) 2023-2025 Dave Nadler
 // License:     MIT license
 /////////////////////////////////////////////////////////////////////////////
 
@@ -157,8 +155,8 @@ void MyFrame::StartStopClicked(wxCommandEvent&) {
     }
 }
 
+const double nominalFieldmG = 512.63; // ~ strength of Earth's field at Dave's desk; see below.
 void MyFrame::Make_A_Measurement() {
-    const double nominalFieldmG = 512.63; // ~ strength of Earth's field at Dave's desk; see below.
     wxLogMessage("Measure_XYZ_Field_WithResetSet...");
     compass.Measure_XYZ_Field_WithResetSet();
     wxLogMessage("-----------");
@@ -193,19 +191,23 @@ void MyFrame::Make_A_Measurement() {
      *  51,263 nT    20,728 nT   20,104 nT   -5047 nT    46,885 nT      -14.09°       66.15°
      */
     double sensors_mG[3]; double totalField_mG = 0.0;
-    for (int i = 0; i < 3; i++) {
-        sensors_mG[i] = (double)compass.field[i] /
-            ((double)MMC5983MA_C_local::CountsPerGauss/1000.0); // ie 16.384
-        totalField_mG += pow(sensors_mG[i],2);
+    auto Reportorama = [this, &sensors_mG, &totalField_mG] (const char* pContextString) {
+        for (int i = 0; i < 3; i++) {
+            sensors_mG[i] = (double)compass.field[i] /
+                ((double)MMC5983MA_C_local::CountsPerGauss/1000.0); // ie 16.384
+            totalField_mG += pow(sensors_mG[i],2);
+        };
+        totalField_mG = sqrt(totalField_mG);
+        wxString report_FieldStrength;
+        report_FieldStrength.Printf("Field mG(%s): Total=%6.2f (%3.0f%% of nominal %6.2fmG), X=%6.2f, Y=%6.2f, Z=%6.2f",
+            pContextString,
+            totalField_mG, 100*totalField_mG/nominalFieldmG, nominalFieldmG,
+            sensors_mG[0], sensors_mG[1], sensors_mG[2] );
+        m_CompassDetail_staticText->SetLabel(report_FieldStrength);
+        report_FieldStrength.Replace("%", "%%"); // so wxLog doesn't expand percentage as a printf-style format specifier
+        wxLogMessage(report_FieldStrength);
     };
-    totalField_mG = sqrt(totalField_mG);
-    wxString report_FieldStrength;
-    report_FieldStrength.Printf("Field mG: Total=%6.2f (%3.0f%% of nominal %6.2fmG), X=%6.2f, Y=%6.2f, Z=%6.2f",
-        totalField_mG, 100*totalField_mG/nominalFieldmG, nominalFieldmG,
-        sensors_mG[0], sensors_mG[1], sensors_mG[2] );
-    m_CompassDetail_staticText->SetLabel(report_FieldStrength);
-    report_FieldStrength.Replace("%", "%%"); // so wxLog doesn't expand percentage as a printf-style format specifier
-    wxLogMessage(report_FieldStrength);
+    Reportorama("cmd  SR");
     //
     static double minReadings_mG[3] = { 0.0, 0.0, 0.0 }, maxReadings_mG[3] = {0.0, 0.0, 0.0}, avgReadings_mG[3] = { 0.0, 0.0, 0.0 };
     for (int i = 0; i < 3; i++) {
@@ -224,7 +226,9 @@ void MyFrame::Make_A_Measurement() {
     m_ObservedCompassOffsets_staticText->SetLabel(report_AvgMinMax);
     wxLogMessage(report_AvgMinMax);
     //
-    // compass.Measure_XYZ_Field_WithAutoSR();
+    compass.Measure_XYZ_Field_WithAutoSR();
+    Reportorama("Auto-SR");
+
 
 
 
@@ -237,7 +241,7 @@ void MyFrame::Make_A_Measurement() {
 // Diagnostic output for MMC5983MA_C_local (MMC5983MA_C register IO trace)
 // ----------------------------------------------------------------------------
 // ToDo: Clean this up to eliminate cut-and-past; should be static methods?
-int MMC5983MA_IO_WindowsQwiic_MCP2221_C::DiagPrintf(const char* format, ...) {
+int MMC5983MA_IO_base_C::DiagPrintf(const char* format, ...) {
     va_list args;
     va_start(args, format);
 #if 0

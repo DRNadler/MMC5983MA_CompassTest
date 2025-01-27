@@ -353,7 +353,7 @@ FTDIMPSSE_API void Cleanup_libMPSSE(void)
  */
 BOOL APIENTRY DllMain(HANDLE hModule, DWORD reason_for_call, LPVOID lpReserved)
 {
-	FT_STATUS status = FT_OK;
+	// DRN: Never Used: FT_STATUS status = FT_OK;
 	FN_ENTER;
 
     switch (reason_for_call)

@@ -49,11 +49,10 @@ class MMC5983MA_IO_base_C {
 	/// Did last IO operation succeed?
 	bool IO_OK();
 	/// Application must implement printf-analog if MMC5983MA_PRINT_DETAILED_LOG is defined in MMC5983MA_C
-	int DiagPrintf(const char* format, ...);
+	static int DiagPrintf(const char* format, ...);
 	#ifdef __GNUG__
 		__attribute__((format(printf, 2, 3))); // help GCC do DiagPrintf format string checking
 	#endif
-
 	MMC5983MA_IO_base_C(InterfaceType_T interfaceType_) : interfaceType(interfaceType_) {};
 };
 

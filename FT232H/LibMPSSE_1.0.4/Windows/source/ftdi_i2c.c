@@ -1018,7 +1018,6 @@ static FT_STATUS I2C_FastWrite(FT_HANDLE handle, UCHAR deviceAddress,
 {
 	FT_STATUS status = FT_OK;
 	uint32 i = 0; /* index of cmdBuffer that is filled */
-	uint32 j = 0; /* scratch register */
 	uint32 sizeTotal;
 	uint32 sizeOverhead;
 	uint8* outBuffer;
@@ -1069,14 +1068,14 @@ static FT_STATUS I2C_FastWrite(FT_HANDLE handle, UCHAR deviceAddress,
 	{
 		DBG(MSG_DEBUG,"adding START condition\n");
 		/* SCL high, SDA high */
-		for (j = 0; j < START_DURATION_1; j++)
+		for (uint32 j = 0; j < START_DURATION_1; j++)
 		{
 			outBuffer[i++] = MPSSE_CMD_SET_DATA_BITS_LOWBYTE;
 			outBuffer[i++] = VALUE_SCLHIGH_SDAHIGH;
 			outBuffer[i++] = DIRECTION_SCLOUT_SDAOUT;
 		}
 		/* SCL high, SDA low */
-		for (j = 0; j < START_DURATION_2; j++)
+		for (uint32 j = 0; j < START_DURATION_2; j++)
 		{
 			outBuffer[i++] = MPSSE_CMD_SET_DATA_BITS_LOWBYTE;
 			outBuffer[i++] = VALUE_SCLHIGH_SDALOW;
@@ -1119,20 +1118,19 @@ static FT_STATUS I2C_FastWrite(FT_HANDLE handle, UCHAR deviceAddress,
 	}
 
 	/* add commands & data to buffer */
-	j = 0;
-	while(j < bitsToTransfer)
+    uint32_t bitsTransferred = 0;
+	while(bitsTransferred < bitsToTransfer)
 	{
-		bitsInThisTransfer = ((bitsToTransfer-j)>8)?8:(bitsToTransfer-j);
+		bitsInThisTransfer = ((bitsToTransfer-bitsTransferred)>8)? (uint8_t)8 : (uint8_t)(bitsToTransfer-bitsTransferred);
 		/*set direction*/
 		outBuffer[i++] = MPSSE_CMD_SET_DATA_BITS_LOWBYTE;/* MPSSE command */
 		outBuffer[i++] = VALUE_SCLLOW_SDAHIGH; /*Value*/
 		outBuffer[i++] = DIRECTION_SCLOUT_SDAOUT; /*Direction*/
 
 		/* Command to write 8bits */
-		bitsInThisTransfer = ((bitsToTransfer-j)>8)?8:(bitsToTransfer-j);
 		outBuffer[i++]= MPSSE_CMD_DATA_OUT_BITS_NEG_EDGE;/* MPSSE command */
 		outBuffer[i++]= bitsInThisTransfer - 1;
-		outBuffer[i++] = buffer[j/8];
+		outBuffer[i++] = buffer[bitsTransferred/8];
 
 #ifdef FASTWRITE_READ_ACK
 		/* Read 1bit ack after each 8bits written - only in byte mode */
@@ -1149,7 +1147,7 @@ static FT_STATUS I2C_FastWrite(FT_HANDLE handle, UCHAR deviceAddress,
 			bitsToRead++;
 		}
 #endif
-		j+= bitsInThisTransfer;
+		bitsTransferred+= bitsInThisTransfer;
 		DBG(MSG_DEBUG,"i=%u bitsToTransfer=%u bitsInThisTransfer=%u\n",
 			(unsigned)i,(unsigned)bitsToTransfer,(unsigned)bitsInThisTransfer);
 	}
@@ -1158,21 +1156,21 @@ static FT_STATUS I2C_FastWrite(FT_HANDLE handle, UCHAR deviceAddress,
 	if (options & I2C_TRANSFER_OPTIONS_STOP_BIT)
 	{
 		/* SCL low, SDA low */
-		for (j = 0; j < STOP_DURATION_1; j++)
+		for (uint32 j = 0; j < STOP_DURATION_1; j++)
 		{
 			outBuffer[i++] = MPSSE_CMD_SET_DATA_BITS_LOWBYTE;
 			outBuffer[i++] = VALUE_SCLLOW_SDALOW;
 			outBuffer[i++] = DIRECTION_SCLOUT_SDAOUT;
 		}
 		/* SCL high, SDA low */
-		for (j = 0; j < STOP_DURATION_2; j++)
+		for (uint32 j = 0; j < STOP_DURATION_2; j++)
 		{
 			outBuffer[i++] = MPSSE_CMD_SET_DATA_BITS_LOWBYTE;
 			outBuffer[i++] = VALUE_SCLHIGH_SDALOW;
 			outBuffer[i++] = DIRECTION_SCLOUT_SDAOUT;
 		}
 		/* SCL high, SDA high */
-		for (j = 0; j < STOP_DURATION_3; j++)
+		for (uint32 j = 0; j < STOP_DURATION_3; j++)
 		{
 			outBuffer[i++] = MPSSE_CMD_SET_DATA_BITS_LOWBYTE;
 			outBuffer[i++] = VALUE_SCLHIGH_SDAHIGH;
@@ -1230,7 +1228,6 @@ static FT_STATUS I2C_FastRead(FT_HANDLE handle, UCHAR deviceAddress,
 {
 	FT_STATUS status = FT_OK;
 	uint32 i = 0; /* index of cmdBuffer that is filled */
-	uint32 j = 0; /* scratch register */
 	uint32 sizeTotal;
 	uint32 sizeOverhead;
 	uint8* outBuffer;
@@ -1275,14 +1272,14 @@ static FT_STATUS I2C_FastRead(FT_HANDLE handle, UCHAR deviceAddress,
 	if (options & I2C_TRANSFER_OPTIONS_START_BIT)
 	{
 		/* SCL high, SDA high */
-		for (j = 0; j < START_DURATION_1; j++)
+		for (uint32 j = 0; j < START_DURATION_1; j++)
 		{
 			outBuffer[i++] = MPSSE_CMD_SET_DATA_BITS_LOWBYTE;
 			outBuffer[i++] = VALUE_SCLHIGH_SDAHIGH;
 			outBuffer[i++] = DIRECTION_SCLOUT_SDAOUT;
 		}
 		/* SCL high, SDA low */
-		for (j = 0; j < START_DURATION_2; j++)
+		for (uint32 j = 0; j < START_DURATION_2; j++)
 		{
 			outBuffer[i++] = MPSSE_CMD_SET_DATA_BITS_LOWBYTE;
 			outBuffer[i++] = VALUE_SCLHIGH_SDALOW;
@@ -1324,10 +1321,10 @@ static FT_STATUS I2C_FastRead(FT_HANDLE handle, UCHAR deviceAddress,
 	}
 
 	/* add commands & data to buffer */
-	j = 0;
-	while(j < bitsToTransfer)
+    uint32_t bitsTransferred = 0;
+	while(bitsTransferred < bitsToTransfer)
 	{
-		bitsInThisTransfer = ((bitsToTransfer-j)>8)?8:(bitsToTransfer-j);
+		bitsInThisTransfer = ((bitsToTransfer-bitsTransferred)>8)? (uint8_t)8 : (uint8_t)(bitsToTransfer-bitsTransferred);
 
 		/*set direction*/
 		outBuffer[i++] = MPSSE_CMD_SET_DATA_BITS_LOWBYTE;/* MPSSE command */
@@ -1351,32 +1348,32 @@ static FT_STATUS I2C_FastRead(FT_HANDLE handle, UCHAR deviceAddress,
         // Burn off one I2C bit time
        outBuffer[i++] = MPSSE_CMD_DATA_OUT_BITS_NEG_EDGE;                                                                      //
 			outBuffer[i++] = 0; /*0x00 = 1bit; 0x07 = 8bits*/ 
-        outBuffer[i++] = (j<(bitsToTransfer-1))?(SEND_ACK):	\
+        outBuffer[i++] = (bitsTransferred<(bitsToTransfer-1))?(SEND_ACK):	\
 			((options & I2C_TRANSFER_OPTIONS_NACK_LAST_BYTE)?SEND_NACK:SEND_ACK);
 		}
-		j+= bitsInThisTransfer;
+		bitsTransferred+= bitsInThisTransfer;
 	}
-	*sizeTransferred = j;
+	*sizeTransferred = bitsTransferred;
 
 	/* Write STOP bit */
 	if (options & I2C_TRANSFER_OPTIONS_STOP_BIT)
 	{
 		/* SCL low, SDA low */
-		for (j = 0; j < STOP_DURATION_1; j++)
+		for (uint32 j = 0; j < STOP_DURATION_1; j++)
 		{
 			outBuffer[i++] = MPSSE_CMD_SET_DATA_BITS_LOWBYTE;
 			outBuffer[i++] = VALUE_SCLLOW_SDALOW;
 			outBuffer[i++] = DIRECTION_SCLOUT_SDAOUT;
 		}
 		/* SCL high, SDA low */
-		for (j = 0; j < STOP_DURATION_2; j++)
+		for (uint32 j = 0; j < STOP_DURATION_2; j++)
 		{
 			outBuffer[i++] = MPSSE_CMD_SET_DATA_BITS_LOWBYTE;
 			outBuffer[i++] = VALUE_SCLHIGH_SDALOW;
 			outBuffer[i++] = DIRECTION_SCLOUT_SDAOUT;
 		}
 		/* SCL high, SDA high */
-		for (j = 0; j < STOP_DURATION_3; j++)
+		for (uint32 j = 0; j < STOP_DURATION_3; j++)
 		{
 			outBuffer[i++] = MPSSE_CMD_SET_DATA_BITS_LOWBYTE;
 			outBuffer[i++] = VALUE_SCLHIGH_SDAHIGH;
