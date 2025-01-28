@@ -1,15 +1,24 @@
 # MMC5983MA Compass Test - Quick-And-Dirty test
-For reference see [Memsic MMC5983MA Compass Datasheet Rev A, Formal release date: 4/3/2019](https://www.memsic.com/Public/Uploads/uploadfile/files/20220119/MMC5983MADatasheetRevA.pdf) </br>
-Also [Ten! videos about this part by Robert](https://www.youtube.com/@robertssmorgasbord/search?query=mmc). 
+This repository is a C++ Windows test program using wxWidgets,
+communicating with a Qwiic MMC5983A board using an Adafruit MCP2221 or Adafruit FT232H USB-to-Qwiic adapter.
+Included is the MMC5983A C++ device driver I wrote, which is a template taking a communication class as its argument
+(the communications class is implemented for both Adafruit PC adapters and my embedded target).
+Because there are *MANY* bugs in FTDI and Microchip Windows access library support code for their USB-to-I2C adapter chips,
+I've included the corrected software for both adapters.
+
+For sensor reference see:
+- [Memsic MMC5983MA Compass Datasheet Rev A, Formal release date: 4/3/2019](https://www.memsic.com/Public/Uploads/uploadfile/files/20220119/MMC5983MADatasheetRevA.pdf)
+- [Ten! videos about this part by Robert](https://www.youtube.com/@robertssmorgasbord/search?query=mmc). 
 
 The [MEMSIC MMC5983-B Prototyping Board](https://www.mouser.com/ProductDetail/MEMSIC/MMC5983-B?qs=B6kkDfuK7%2FDLJ5Gi%252B91PGg%3D%3D&mgh=1&gad_source=1) gets good results.
 </br>
 The [SparkFun Qwiic MMC5983MA board](https://www.sparkfun.com/products/19921)
-yields poor results; field magnitude measurement problems highlight big offsets in each axis.
-Likely caused by overheating during Sparkfun's soldering;
+yields poor results (also reported by other users); field magnitude measurement problems highlight big offsets in each axis.
+Very likely caused by overheating during Sparkfun's soldering;
 this part requires special low-temperature soldering.
 </br>
 
+# Making an MMC5983MA Reading
 To make a reading, I use the degauss procedure to find the mid-point
 (the zero-field output value, inapproriately called 'offset' in MEMSIC datasheet).
 Reminder: The film magnetization procedure uses a SET/RESET function which gives a big pulse and resets the device,
@@ -22,10 +31,6 @@ All per the instructions in the datasheet.
 Rotating the sensor at a spot in 3D, the measured field magnitude should be constant (no hard magnetic offsets on the test boards).
 I rotate the sensor at a fixed point to find the minimum and maximum sensor output for each axis,
 which should be identical magnitude if the degauss procedure works and the mid-point is found correctly.
-
-My test program (this GitHub repository) is a C++ Windows program using wxWidgets,
-communicating with the Qwiic MMC5983A boards using an Adafruit MCP2221 USB-to-Qwiic adapter.
-Included is the MMC5983A C++ device driver I wrote (not yet complete).
 
 # MEMSIC MMC5983-B Prototyping Board Good Results
 I wired the MEMSIC evaluation board  to Qwiic and connected to my PC.
@@ -55,7 +60,11 @@ There's no hard offset in the test setup that would explain this behavior...
 Here's an example after rotating the sensor to try find min and max for each axis:
 ![offset image](./MinMax_XYZ_search_NOT_WORKING.PNG)
 
-# MMC5983MA datasheet problems:
+# MMC5983MA Hardware Bug using SPI
+While I would not have thought it possible, the MMC5983MA has a hardware bug:
+[MMC5983MA SET/RESET work fine using I2c, but do not flip the YZ sense direction when using SPI (only the X axis works)](https://electronics.stackexchange.com/questions/736609/magnetometer-memsic-mmc5983ma-set-reset-only-works-on-x-channel-when-using-spi)
+
+# MMC5983MA Datasheet Problems
 The [Memsic MMC5983MA Compass Datasheet Rev A, Formal release date: 4/3/2019](https://www.memsic.com/Public/Uploads/uploadfile/files/20220119/MMC5983MADatasheetRevA.pdf) is seriously unclear on a number of points,
 and sometimes conflicts with MEMSIC's sample code.
 Unfortunately, I've had great difficulty getting sensible answers from MEMSIC technical support.
