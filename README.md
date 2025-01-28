@@ -1,4 +1,4 @@
-# MMC5983MA Compass Test - Quick-And-Dirty test
+# MEMSIC MMC5983MA Compass Test - Quick-And-Dirty test
 This repository is a C++ Windows test program using wxWidgets,
 communicating with a Qwiic MMC5983A board using an Adafruit MCP2221 or Adafruit FT232H USB-to-Qwiic adapter.
 Included is the MMC5983A C++ device driver I wrote, which is a template taking a communication class as its argument
@@ -6,9 +6,9 @@ Included is the MMC5983A C++ device driver I wrote, which is a template taking a
 Because there are *MANY* bugs in FTDI and Microchip Windows access library support code for their USB-to-I2C adapter chips,
 I've included the corrected software for both adapters.
 
-For sensor reference see:
+For MMC5983MA sensor reference see:
 - [Memsic MMC5983MA Compass Datasheet Rev A, Formal release date: 4/3/2019](https://www.memsic.com/Public/Uploads/uploadfile/files/20220119/MMC5983MADatasheetRevA.pdf)
-- [Ten! videos about this part by Robert](https://www.youtube.com/@robertssmorgasbord/search?query=mmc). 
+- [Ten! videos about MMC5983MA by Robert](https://www.youtube.com/@robertssmorgasbord/search?query=mmc). 
 
 The [MEMSIC MMC5983-B Prototyping Board](https://www.mouser.com/ProductDetail/MEMSIC/MMC5983-B?qs=B6kkDfuK7%2FDLJ5Gi%252B91PGg%3D%3D&mgh=1&gad_source=1) gets good results.
 </br>
@@ -61,8 +61,9 @@ Here's an example after rotating the sensor to try find min and max for each axi
 ![offset image](./MinMax_XYZ_search_NOT_WORKING.PNG)
 
 # MMC5983MA Hardware Bug using SPI
-While I would not have thought it possible, the MMC5983MA has a hardware bug:
-[MMC5983MA SET/RESET work fine using I2c, but do not flip the YZ sense direction when using SPI (only the X axis works)](https://electronics.stackexchange.com/questions/736609/magnetometer-memsic-mmc5983ma-set-reset-only-works-on-x-channel-when-using-spi)
+While I would not have thought it possible, the MMC5983MA has a hardware bug:<br>
+see
+[MMC5983MA SET/RESET work fine using I2c, but do not flip the YZ sense direction when using SPI (only the X axis works)](https://electronics.stackexchange.com/questions/736609/magnetometer-memsic-mmc5983ma-set-reset-only-works-on-x-channel-when-using-spi).
 
 # MMC5983MA Datasheet Problems
 The [Memsic MMC5983MA Compass Datasheet Rev A, Formal release date: 4/3/2019](https://www.memsic.com/Public/Uploads/uploadfile/files/20220119/MMC5983MADatasheetRevA.pdf) is seriously unclear on a number of points,
