@@ -39,7 +39,7 @@ and the min/max for all axis have consistent magnitude (though the Z axis has sl
 ![offset image](./MinMax_XYZ_search_WORKING.PNG)
 
 # SparkFun Qwiic MMC5983MA 19921 Problems
-<br>Update: The SparkFun MMC5983MA is not working properly!
+Update: The SparkFun MMC5983MA is not working properly!
 The SparkFun compass fails a basic sanity test (constant field magnitude reading).
 The problems detailed here are consistent with a damaged MMC5983MA,
 caused by exceeding the allowed heating of the sensor during soldering.
@@ -47,8 +47,8 @@ Unfortunately I've had first-hand experience with this overheating problem
 during production of our own boards.
 </br>
 
-Rotating the MMC5983MA at a fixed point in space, it's measuring different field magnitudes;
-the magnitude should be constant.  Note magnitude is sqrt(X^2+Y^2+Z^2), and reported values range from 
+Rotating the MMC5983MA at a fixed point in space, the SparkFun MMC5983MA is measuring different field magnitudes
+(the magnitude should be constant).  Note magnitude is sqrt(X^2+Y^2+Z^2), and reported values range from 
 131% down to 76% of the expected local field strength for my location (from WMM World Magnetic Model).
 So in the right ballpark and making measurements, but definitely something is wrong.
 [The file ExampleMagnitudeProblemLog.txt](ExampleMagnitudeProblemLog.txt) shows details of the erroneous readings.
